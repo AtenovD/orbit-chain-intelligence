@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/banner.svg" alt="Orbit — See the signal before it becomes noise" width="100%">
+  <img src="assets/banner.svg" alt="Orbit — Check the token before you trade it" width="100%">
 </p>
 
 <p align="center">
@@ -22,10 +22,10 @@
 </p>
 
 <p align="center">
-  A live crew of five AI agents that reads on-chain data, meme narrative and risk on Robinhood Chain - then argues from evidence, not hype. No live orders, ever.
+  Paste a Robinhood Chain contract address and five AI agents check its holders, liquidity and owner permissions, then return ENTER, WATCH or SKIP with linked evidence. Paper trading only. No live orders, ever.
 </p>
 
-<h3 align="center">Most AI trading demos ask a model for a vibe.<br>This one makes the model show its evidence - and lets only deterministic code promote a decision.</h3>
+<h3 align="center">Every verdict comes with its evidence.<br>A protection gate written in code, not a prompt, decides whether an ENTER survives.</h3>
 
 <table align="center">
   <tr>
@@ -68,7 +68,7 @@
 
 ## Why Orbit
 
-Most "AI trading" demos hand a model a chart and ask for a vibe. Orbit is built around the opposite idea:
+A language model can write a convincing case for any token. Orbit treats that as a proposal to be checked:
 
 > **A model may propose. Only deterministic code may promote.**
 

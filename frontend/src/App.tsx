@@ -2670,23 +2670,23 @@ function NewChat({
           <div className="signal-deck-copy">
             <p className="signal-kicker"><i /> {ru ? "СИГНАЛЬНАЯ КОМНАТА" : "SIGNAL ROOM"}</p>
             <h1>
-              {ru ? <>Заметить <em>сигнал</em><br />до того, как он станет шумом.</> : <>See the <em>signal</em><br />before it becomes noise.</>}
+              {ru ? <>Проверьте токен <em>до</em> того, как торговать.</> : <>Check the token <em>before</em> you trade it.</>}
             </h1>
             <p className="signal-lede">
               {ru
-                ? "Живая команда из пяти AI-персонажей читает on-chain данные, мем-нарратив и риск — и спорит с фактами, а не с хайпом."
-                : "A live crew of five AI characters reads on-chain data, meme narrative and risk — then argues from evidence, not hype."}
+                ? "Вставьте адрес контракта. Пять агентов проверят холдеров, ликвидность и права владельца в Robinhood Chain и вернут ENTER, WATCH или SKIP со ссылками на доказательства."
+                : "Paste a contract address. Five agents check holders, liquidity and owner permissions on Robinhood Chain and return ENTER, WATCH or SKIP with the evidence attached."}
             </p>
             <div className="signal-proof">
-              <span><Radar /> {ru ? "Поток сигналов" : "Signal stream"}</span>
-              <span><ShieldCheck /> {ru ? "Риск под контролем" : "Risk checked"}</span>
+              <span><Radar /> {ru ? "Данные прямо из сети" : "Live chain data"}</span>
+              <span><ShieldCheck /> {ru ? "Только бумажная торговля" : "Paper trading only"}</span>
             </div>
           </div>
           <div className="signal-scout-stage">
             <div className="signal-scout-caption"><i /> {value.trim() ? (ru ? "СКАНИРУЕТ БРИФ" : "SCANNING BRIEF") : (ru ? "НАБЛЮДАЕТ ЗА ЦЕПЬЮ" : "WATCHING THE CHAIN")}</div>
             <Mascot state={value.trim() ? "thinking" : selectedAgents.size ? "done" : "idle"} size={348} />
-            <div className="signal-scout-callout signal-scout-callout-left"><small>01</small><b>{ru ? "Видит движение" : "Sees movement"}</b><span>{ru ? "и отделяет всплеск от шума" : "separates motion from noise"}</span></div>
-            <div className="signal-scout-callout signal-scout-callout-right"><small>02</small><b>{ru ? "Будит команду" : "Wakes the crew"}</b><span>{ru ? "когда факт меняет картину" : "when evidence changes the picture"}</span></div>
+            <div className="signal-scout-callout signal-scout-callout-left"><small>01</small><b>{ru ? "Читает сеть" : "Reads the chain"}</b><span>{ru ? "холдеры и пулы" : "holders and pools"}</span></div>
+            <div className="signal-scout-callout signal-scout-callout-right"><small>02</small><b>{ru ? "Показывает источники" : "Shows its sources"}</b><span>{ru ? "у каждого вывода есть ссылка" : "every claim links to evidence"}</span></div>
           </div>
           <aside className="signal-market-card">
             <header><span>{ru ? "АНАЛИТИКА РАБОЧЕЙ КОМНАТЫ" : "ROOM ANALYTICS"}</span><i>{history.length ? "LIVE DATA" : "EMPTY"}</i></header>
@@ -2720,7 +2720,7 @@ function NewChat({
         </section>
         <section className="signal-crew-section">
           <header>
-            <div><p>{ru ? "БАЗОВАЯ КОМАНДА" : "CORE CREW"}</p><h2>{ru ? "Пять личностей. Один сигнал." : "Five personalities. One signal."}</h2></div>
+            <div><p>{ru ? "БАЗОВАЯ КОМАНДА" : "CORE CREW"}</p><h2>{ru ? "Пять агентов, пять задач." : "Five agents, five jobs."}</h2></div>
             <button onClick={() => setPickerOpen(true)}>{ru ? "Настроить до 10" : "Configure up to 10"}<ChevronRight /></button>
           </header>
           <div className="signal-crew-filmstrip">

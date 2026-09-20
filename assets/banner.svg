@@ -31,8 +31,8 @@
   <circle cx="1104" cy="240" r="9" fill="#a78bfa"/>
   <text x="72" y="86" font-family="Menlo, Consolas, monospace" font-size="15" letter-spacing="4" fill="#a8f044">ROBINHOOD CHAIN · 4663</text>
   <text x="68" y="188" font-family="Helvetica, Arial, sans-serif" font-size="104" font-weight="700" letter-spacing="-4" fill="url(#word)">Orbit</text>
-  <text x="72" y="238" font-family="Helvetica, Arial, sans-serif" font-size="30" fill="#e9f5e1">See the signal before it becomes noise.</text>
-  <text x="72" y="282" font-family="Helvetica, Arial, sans-serif" font-size="19" fill="#8fa596">A five-agent crew that argues from on-chain evidence, not hype.</text>
+  <text x="72" y="238" font-family="Helvetica, Arial, sans-serif" font-size="30" fill="#e9f5e1">Check the token before you trade it.</text>
+  <text x="72" y="282" font-family="Helvetica, Arial, sans-serif" font-size="19" fill="#8fa596">Five agents check holders, liquidity and owner permissions.</text>
   <g font-family="Menlo, Consolas, monospace" font-size="13" letter-spacing="2">
     <rect x="72" y="310" width="150" height="34" rx="17" fill="#12301c" stroke="#3f7d2c"/>
     <text x="147" y="332" text-anchor="middle" fill="#b6ff5c">OPEN SOURCE</text>
