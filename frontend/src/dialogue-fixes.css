@@ -1,0 +1,102 @@
+.runlayout.withpanel {
+  grid-template-columns: 245px minmax(430px, 1fr) minmax(300px, 390px);
+}
+
+.runagentsheading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.runagentsheading .eyebrow { margin: 0; }
+.runagentsheading button {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 8px;
+}
+.runagentsheading svg { width: 14px; }
+.manageagentsbutton span { font-size: 10px; }
+
+.runagentsmodal { width: min(680px, calc(100vw - 32px)); }
+.runagentsmodal > header {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+.runagentsmodal > header h2 { margin: 3px 0 5px; }
+.runagentsmodal > header small { color: #8d93a0; }
+.runagentchoices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+  margin: 20px 0;
+  max-height: min(480px, 55vh);
+  overflow: auto;
+}
+.runagentchoices > button {
+  min-width: 0;
+  display: flex;
+  justify-content: flex-start;
+  text-align: left;
+  padding: 11px;
+  background: #191b21;
+  border-color: #343844;
+}
+.runagentchoices > button:hover { border-color: #5a6070; background: #22252d; }
+.runagentchoices > button.active { border-color: #8cf272; background: #2d4228; }
+.runagentchoices > button > span:nth-child(2) { display: grid; min-width: 0; }
+.runagentchoices > button > span:nth-child(2) b,
+.runagentchoices > button > span:nth-child(2) small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.runagentchoices > button > span:nth-child(2) small { color: #898f9c; }
+.runagentchoices > button > i {
+  margin-left: auto;
+  width: 22px;
+  height: 22px;
+  border: 1px solid #454a57;
+  border-radius: 7px;
+  display: grid;
+  place-items: center;
+}
+.runagentchoices > button.active > i { background: #86f06c; border-color: #a1ff89; }
+.runagentchoices > button i svg { width: 13px; }
+.runagentsmodal footer { display: flex; align-items: center; gap: 8px; }
+.runagentsmodal footer > span { margin-right: auto; color: #8b919d; font-size: 11px; }
+
+.resultpanel {
+  width: auto;
+  min-width: 0;
+  max-width: 390px;
+}
+.resultpanel h3,
+.resultcontent,
+.resultcontent pre {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+@media (max-width: 1250px) {
+  .runlayout.withpanel { grid-template-columns: 210px minmax(0, 1fr); }
+  .runlayout.withpanel .runright {
+    display: block;
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: min(390px, 90vw);
+    z-index: 7;
+    box-shadow: -20px 0 50px #0008;
+  }
+}
+
+@media (max-width: 760px) {
+  .manageagentsbutton span { display: none; }
+  .runagentchoices { grid-template-columns: 1fr; }
+  .runagentsmodal footer > span { display: none; }
+}

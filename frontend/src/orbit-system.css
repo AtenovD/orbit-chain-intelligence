@@ -1,0 +1,278 @@
+/*
+ * ORBIT system pass
+ * This file deliberately loads last. Older feature sheets grew around a
+ * blue/violet prototype; these tokens and surface overrides keep every route
+ * in the Robinhood Chain Signal Room system instead of styling only home.
+ */
+:root {
+  --font-ui: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-editorial: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --font-mono: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+  --bg: #070b09;
+  --surface: #0d1611;
+  --surface2: #142019;
+  --surface3: #1b2a20;
+  --border: rgba(204, 250, 150, .15);
+  --text: #edf5e8;
+  --muted: #8d9d8d;
+  --primary: #c7ff5c;
+  --green: #84f4dc;
+  --amber: #f2bf75;
+  --red: #ff8f7b;
+  color: var(--text);
+  background: var(--bg);
+  font-family: var(--font-ui);
+}
+
+html, body, #root { min-height: 100%; background: var(--bg); }
+body, button, input, textarea, select, option {
+  font-family: var(--font-ui) !important;
+  color: var(--text);
+  font-feature-settings: "kern" 1, "liga" 1;
+}
+h1, h2, .workflowhistory h1, .researchmain h1, .profilepage h1,
+.connections h1, .appearancepage h1, .memoryhead h1, .projects h1 {
+  font-family: var(--font-display) !important;
+  font-weight: 400 !important;
+  letter-spacing: -.05em !important;
+}
+h3, h4, b, strong { font-family: var(--font-ui) !important; }
+code, pre, .eyebrow, .status, .model, .eventtype, .usage, .modebadge,
+.connection, .runstatus, .statusbar, .memoryusage, .notetype {
+  font-family: var(--font-mono) !important;
+}
+.historylist button, .filters>button, .modes button, .researchhistory small,
+.sourcepills button, .researchoptions>select, .researchprogress span,
+.reportdocument pre, .memorynote pre {
+  font-family: var(--font-ui) !important;
+}
+
+/* Shell and navigation */
+.app, .main, .projectshell, .tabbody, .page, .workflowhistory,
+.appearancepage, .memorypage, .researchpage { background: var(--bg); }
+.nav {
+  background: linear-gradient(180deg, #0a100c, #070b09) !important;
+  border-right-color: rgba(207, 252, 151, .16) !important;
+}
+.brandmark {
+  display:inline-flex!important;
+  align-items:center;
+  justify-content:center;
+  overflow:visible!important;
+  background:transparent!important;
+  box-shadow:0 0 0 5px rgba(199, 255, 92, .09), 0 0 26px rgba(199, 255, 92, .18)!important;
+}
+.brandmark svg {
+  display:block;
+  width:100%;
+  height:100%;
+  overflow:visible;
+  filter:drop-shadow(0 3px 5px rgba(0,0,0,.26));
+}
+.navitems button, .collapse, .user small, .historylist button { color: #9cac9d !important; }
+.navitems button:hover, .navitems button.active, .collapse:hover {
+  color: #effadf !important;
+  background: linear-gradient(90deg, rgba(146, 212, 70, .18), rgba(18, 32, 22, .6)) !important;
+  box-shadow: inset 2px 0 #c7ff5c;
+}
+.user { border-top-color: rgba(207, 252, 151, .14) !important; }
+.user>span { background: linear-gradient(145deg, #c7ff5c, #4f9635) !important; color: #122013 !important; }
+.notificationbutton i { background: #ff876f !important; color: #1d0e09 !important; }
+.notificationpanel {
+  background: #0d1711 !important;
+  border-color: rgba(205, 253, 145, .22) !important;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .58) !important;
+}
+
+/* Shared controls and content surfaces */
+button { border-color: var(--border); background: var(--surface2); }
+button:hover { background: var(--surface3); }
+input, textarea, select, option { background-color: #0b130e !important; border-color: var(--border) !important; }
+input:focus, textarea:focus, select:focus { border-color: rgba(199, 255, 92, .68) !important; box-shadow: 0 0 0 3px rgba(199, 255, 92, .09) !important; }
+.primary {
+  background: linear-gradient(135deg, #d9ff83, #a8e94d) !important;
+  border-color: #d9ff83 !important;
+  color: #132012 !important;
+  box-shadow: 0 12px 28px rgba(157, 232, 73, .16) !important;
+}
+.primary:hover { background: linear-gradient(135deg, #efffbd, #b9f56a) !important; }
+.eyebrow, label>span { color: #a3c77b !important; }
+.status, .modebadge, .connection, .runstatus { background: #17251a !important; color: #a8bca3 !important; }
+
+/* Workflows, agents and configuration routes */
+.projecthead, .tabs, .builderside, .teampanel, .palette, .runleft,
+.runright, .memoryhead, .researchhistory {
+  background: #0b130e !important;
+  border-color: var(--border) !important;
+}
+.goalbox, .projectcard, .agentcard, .stat, .dialoguelist article,
+.connectioncard, .appearancepage section, .runobjective, .eventbody,
+.artifact, .kanban section>article, .historysearch, .search,
+.archivefilter, .memoryusage, .researchcomposer, .researchresult,
+.reportdocument, .evidence, .mcpattach>button {
+  background: linear-gradient(145deg, #142019, #0d1611) !important;
+  border-color: var(--border) !important;
+}
+.projecthead, .tabs, .runhead, .filters, .composer, .statusbar,
+.memoryhead, .researchresult>header, .evidence { border-color: var(--border) !important; }
+.tabs button.active, .runright nav button.active { color: #ddff9e !important; border-color: #c7ff5c !important; }
+.feed .eventbody p,
+.feed .eventbody header,
+.feed .composer textarea,
+.feed .composer select,
+.feed .composerhint {
+  font-family: var(--font-ui) !important;
+  font-synthesis: none;
+}
+.feed .eventbody p { font-size: 13px; line-height: 1.7; letter-spacing: -.006em; }
+.feed .composer textarea { font-size: 14px; line-height: 1.45; }
+.runscout .orbit-scout-3d { flex: 0 0 auto; }
+
+.profile .agent-delete {
+  margin-left: 8px;
+  min-width: 36px;
+  height: 36px;
+  padding: 8px;
+  border-color: rgba(245, 104, 104, .28);
+  background: rgba(169, 60, 60, .12);
+  color: #ff9ca5;
+}
+
+.profile .agent-delete:hover {
+  background: rgba(169, 60, 60, .28);
+  border-color: rgba(245, 104, 104, .5);
+}
+.agentcard.selected, .dialoguelist article.pinned, .archivefilter button.active,
+.historytabs button.active, .filters button.active, .modes button.active,
+.segment button.active {
+  background: rgba(124, 176, 67, .18) !important;
+  border-color: rgba(199, 255, 92, .42) !important;
+  color: #efffce !important;
+}
+.dialogueicon, .projecticon, .skillslot, .skillmark, .mcpbadge {
+  background: linear-gradient(145deg, rgba(199, 255, 92, .25), rgba(96, 200, 139, .18)) !important;
+  color: #d9ff8b !important;
+}
+
+/* Deep Research and Memory are no longer a separate blue product. */
+.researchpage, .researchmain, .memorypage {
+  background: radial-gradient(circle at 66% 0, rgba(116, 204, 91, .13), transparent 35%), #070b09 !important;
+}
+.researchmain, .memorycanvas {
+  background: radial-gradient(circle at 50% 42%, rgba(130, 218, 101, .15), transparent 28%), #08100b !important;
+}
+.researchhistory>button.active, .sourcepills button.active,
+.flowmodecards>button.active {
+  background: rgba(113, 177, 63, .18) !important;
+  border-color: rgba(199, 255, 92, .46) !important;
+  color: #efffce !important;
+  box-shadow: inset 0 0 0 1px rgba(199, 255, 92, .09) !important;
+}
+.researchoptions>.primary { background: #c7ff5c !important; color: #142013 !important; box-shadow: 0 12px 30px rgba(159, 238, 77, .25) !important; }
+.memorynode.dialogue span, .memorynode.core span {
+  background: radial-gradient(circle at 35% 30%, #dfff91, #5eaa39 68%) !important;
+  border-color: #c7ff5c !important;
+  color: #132013 !important;
+  box-shadow: 0 0 34px rgba(167, 245, 87, .23) !important;
+}
+.memorynode.core>i { border-color: rgba(199, 255, 92, .35) !important; }
+.memorynode.core>i:after, .pulsepacket, .stars i { background: #c7ff5c !important; fill: #c7ff5c !important; }
+.memorynote { background: #0d1711 !important; border-color: var(--border) !important; }
+
+/* Active dialogue */
+.runlayout, .feed { background: #08100b; }
+.runhead, .filters, .composer, .statusbar { background: #0b130e !important; }
+.event-message-human .eventbody { background: rgba(80, 128, 54, .16) !important; border-color: rgba(199, 255, 92, .32) !important; }
+.event-run-started .eventbody, .event-run-completed .eventbody { background: rgba(75, 137, 103, .16) !important; border-color: rgba(132, 244, 220, .28) !important; }
+.eventtype, .artifact svg, .rawevent code { color: #c7ff5c !important; background: rgba(199, 255, 92, .09) !important; }
+.composer textarea, .composer select { background: #0b130e !important; }
+.connection.live, .status.ready, .statusbar .ok { color: #8cf0d8 !important; background: rgba(74, 161, 124, .18) !important; }
+
+/* A picker is a true layer, not translucent content competing with the crew. */
+.agentpicker { z-index: 300 !important; isolation: isolate; background: #09120d !important; border-color: rgba(207, 255, 135, .36) !important; box-shadow: 0 32px 100px rgba(0, 0, 0, .72) !important; }
+.agentpicker::before { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: linear-gradient(145deg, rgba(29, 53, 31, .98), rgba(7, 14, 10, 1) 55%); }
+.agentpicker>header, .agentpickergrid, .agentpicker>footer { position: relative; z-index: 1; }
+.agentpickergrid { padding: 1px; border-radius: 10px; background: #07100b; }
+.agentpickergrid>button { background: #101b13 !important; border-color: rgba(203, 247, 151, .14) !important; }
+.agentpickergrid>button:hover { background: #172719 !important; border-color: rgba(199, 255, 92, .38) !important; }
+.agentpickergrid>button.active { background: linear-gradient(90deg, rgba(114, 170, 58, .28), rgba(21, 42, 25, .96)) !important; border-color: rgba(199, 255, 92, .58) !important; box-shadow: inset 0 0 0 1px rgba(199, 255, 92, .12) !important; }
+.agentpickergrid .active i { background: #c7ff5c !important; border-color: #c7ff5c !important; color: #122012 !important; }
+.signal-deck .startcomposer { position: relative; z-index: 40; isolation: isolate; overflow: visible; }
+.signal-deck .agentpicker { z-index: 320 !important; opacity: 1; }
+
+/* All confirmation and setup overlays share an opaque, predictable plane. */
+.modalback, .connectorback, .skillback, .automationback { z-index: 400 !important; background: rgba(3, 8, 5, .79) !important; backdrop-filter: blur(11px); }
+.modal, .connectormodal, .skillmodal, .automationmodal, .runagentsmodal,
+.githubmodal, .twittermodal, .oauthmodal {
+  background: linear-gradient(145deg, #152119, #09110c) !important;
+  border-color: rgba(207, 255, 144, .25) !important;
+  box-shadow: 0 36px 110px rgba(0, 0, 0, .68) !important;
+}
+
+/* Token registry — the address is a durable object, not a one-off prompt. */
+.tokenboard { min-height: 100%; padding: 42px clamp(22px, 5vw, 76px); color: #ecf4e6; background: radial-gradient(circle at 68% 4%, rgba(136, 219, 85, .15), transparent 31%), #07100b; }
+.tokenboard-head, .tokenboard-track, .tokenboard-grid, .tokendetail>header, .tokenverdicts>header, .tokenfacts, .tokenactions { display: flex; }
+.tokenboard-head { align-items: flex-start; justify-content: space-between; gap: 24px; max-width: 1250px; margin: 0 auto 28px; }
+.tokenboard h1 { max-width: 640px; margin: 7px 0 9px; font-size: clamp(38px, 4vw, 62px); line-height: .97; }
+.tokenboard-head>div>p:last-child { max-width: 620px; margin: 0; color: #98a998; line-height: 1.6; }
+.tokenboard-network { display: inline-flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid rgba(199, 255, 92, .24); border-radius: 999px; background: rgba(14, 31, 17, .8); color: #d9f7b9; font: 600 10px var(--font-mono); letter-spacing: .07em; white-space: nowrap; }
+.tokenboard-network i { width: 7px; height: 7px; border-radius: 50%; background: #8df0a0; box-shadow: 0 0 13px #8df0a0; }.tokenboard-network b { padding-left: 7px; border-left: 1px solid rgba(199,255,92,.22); color: #a8c98d; }
+.tradingtemplates { display: grid; grid-template-columns: minmax(250px, .95fr) minmax(420px, 1.15fr); gap: 22px; align-items: center; margin: 24px 0; padding: 20px; border: 1px solid rgba(199,255,92,.21); border-radius: 17px; background: radial-gradient(circle at 100% 0, rgba(160, 239, 79, .15), transparent 41%), linear-gradient(140deg, #142518, #0a120d); }.tradingtemplates h2 { margin: 6px 0 8px; font-size: 24px; }.tradingtemplates>div>p:last-child { margin: 0; color: #9aac9a; font-size: 11px; line-height: 1.55; }.tradingtemplatecards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }.tradingtemplatecards article { display: grid; grid-template-columns: 31px 1fr; gap: 9px; padding: 13px; border: 1px solid rgba(199,255,92,.15); border-radius: 11px; background: rgba(6, 15, 9, .54); }.tradingtemplatecards article>span { display: grid; grid-row: span 2; width: 31px; height: 31px; place-items: center; border-radius: 9px; background: rgba(199,255,92,.13); color: #d9ff8b; }.tradingtemplatecards svg { width: 16px; }.tradingtemplatecards b { align-self: end; font-size: 11px; }.tradingtemplatecards small { color: #92a592; font-size: 9px; line-height: 1.4; }.tradingtemplatecards button { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; width: 100%; margin-top: 4px; padding: 8px 9px; border: 1px solid rgba(199,255,92,.24); border-radius: 8px; background: rgba(123, 181, 62, .13); color: #dcffad; font-size: 10px; text-align: left; }.tradingtemplatecards button:hover:not(:disabled) { background: rgba(137, 204, 70, .24); }.tradingtemplatecards button:disabled { opacity: .55; cursor: wait; }.tradingtemplatecards button svg { width: 13px; }.templateerror { grid-column: 1 / -1; margin: 0; color: #ffadad; font-size: 10px; }
+.tokenboard-track { align-items: center; justify-content: space-between; gap: 20px; max-width: 1250px; margin: 0 auto 22px; padding: 15px 17px; border: 1px solid var(--border); border-radius: 16px; background: linear-gradient(110deg, rgba(30, 56, 29, .78), rgba(11, 22, 14, .92)); }
+.tokenboard-track>div { display: flex; align-items: center; gap: 11px; min-width: 220px; }.tokenboard-track>div>svg { color: #c7ff5c; }.tokenboard-track b, .tokenboard-track small { display: block; }.tokenboard-track b { font-size: 12px; }.tokenboard-track small { margin-top: 3px; color: #95a597; font-size: 10px; }
+.tokenboard-track form { display: grid; grid-template-columns: minmax(190px, 1.5fr) minmax(130px, .85fr) 112px auto; gap: 8px; width: min(790px, 100%); }.tokenboard-track input, .tokenboard-track select { min-width: 0; padding: 10px 12px; border: 1px solid rgba(183, 219, 145, .18); border-radius: 9px; outline: 0; background: #09130d; color: #efffce; font: 11px var(--font-mono); }.tokenboard-track input:focus, .tokenboard-track select:focus { border-color: rgba(199, 255, 92, .56); }.tokenboard-track button { white-space: nowrap; }
+.tokenboard-grid { gap: 18px; max-width: 1250px; margin: auto; align-items: stretch; }.tokenlist { flex: 0 0 320px; overflow: hidden; border: 1px solid var(--border); border-radius: 16px; background: linear-gradient(145deg, #111d14, #09110c); }.tokenlist>header { display: flex; justify-content: space-between; align-items: center; padding: 14px 15px; border-bottom: 1px solid rgba(183, 219, 145, .12); color: #93a492; font: 600 9px var(--font-mono); letter-spacing: .1em; text-transform: uppercase; }.tokenlist>header b, .tokenverdicts>header>span { display: grid; place-items: center; min-width: 21px; height: 21px; padding: 0 6px; border-radius: 999px; background: rgba(199,255,92,.12); color: #dfff9a; }
+.tokenlist>button { display: flex; width: 100%; align-items: center; gap: 10px; padding: 13px 14px; border: 0; border-bottom: 1px solid rgba(183, 219, 145, .08); text-align: left; background: transparent; color: inherit; }.tokenlist>button:hover, .tokenlist>button.active { background: linear-gradient(90deg, rgba(132, 191, 75, .19), transparent); }.tokenlist>button.active { box-shadow: inset 2px 0 #c7ff5c; }.tokenlist>button>span:nth-child(2) { min-width: 0; flex: 1; }.tokenlist b, .tokenlist small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.tokenlist b { font-size: 12px; }.tokenlist small { margin-top: 4px; color: #819082; font: 9px var(--font-mono); }
+.tokenident { position: relative; display: grid; width: 31px; height: 31px; place-items: center; flex: none; overflow: hidden; border: 1px solid rgba(199,255,92,.35); border-radius: 10px; background: linear-gradient(145deg, #8a60d9, #3876a9); color: #efffce; }.tokenident svg { position: absolute; width: 15px; opacity: .28; }.tokenident i { position: relative; font: 700 10px var(--font-mono); font-style: normal; }.tokenident.large { width: 49px; height: 49px; border-radius: 15px; }.tokenident.large i { font-size: 14px; }.watchmark { color: #c7ff5c; font-size: 15px; }
+.tokenempty, .tokendetail-empty, .verdictempty { display: grid; place-items: center; align-content: center; text-align: center; color: #829182; }.tokenempty { min-height: 210px; padding: 20px; }.tokenempty svg, .tokendetail-empty>svg { width: 32px; color: #c7ff5c; }.tokenempty b { margin-top: 9px; font-size: 12px; }.tokenempty small { margin-top: 4px; white-space: normal; }.tokendetail { min-width: 0; flex: 1; border: 1px solid var(--border); border-radius: 16px; background: linear-gradient(145deg, rgba(18, 32, 20, .98), rgba(7, 14, 10, .99)); }.tokendetail>header { align-items: center; gap: 13px; padding: 24px; border-bottom: 1px solid rgba(183, 219, 145, .12); }.tokendetail h2 { margin: 4px 0 6px; font-size: 27px; }.tokendetail code { color: #91a592; font: 10px var(--font-mono); }.tokenactions { margin-left: auto; gap: 7px; }.tokenactions button { padding: 8px 10px; border: 1px solid rgba(199,255,92,.24); border-radius: 8px; background: rgba(116, 164, 69, .12); color: #dfffab; font-size: 10px; }.tokenactions .danger { display: grid; place-items: center; min-width: 33px; color: #f9a0a0; border-color: rgba(245, 104, 104, .22); background: rgba(169, 60, 60, .1); }.tokenactions .danger svg { width: 14px; }
+.tokenfacts { gap: 26px; padding: 16px 24px; border-bottom: 1px solid rgba(183, 219, 145, .1); }.tokenfacts span { display: grid; gap: 4px; }.tokenfacts small { color: #829182; font: 9px var(--font-mono); text-transform: uppercase; }.tokenfacts b { color: #dcead4; font-size: 11px; }.tokenverdicts { padding: 23px 24px; }.tokenverdicts>header { align-items: center; justify-content: space-between; }.tokenverdicts h3 { margin: 5px 0 0; font-size: 19px; }.tokenverdicts article { display: grid; grid-template-columns: minmax(75px, auto) auto 1fr; gap: 11px; align-items: center; margin-top: 13px; padding: 12px; border: 1px solid rgba(183, 219, 145, .12); border-radius: 10px; background: rgba(3, 10, 5, .35); }.tokenverdicts article>b { padding: 5px 7px; border-radius: 5px; background: rgba(199, 255, 92, .13); color: #dfff9d; font: 700 9px var(--font-mono); text-align: center; text-transform: uppercase; }.tokenverdicts article>span { color: #859587; font: 9px var(--font-mono); }.tokenverdicts article>p { grid-column: 1 / -1; margin: 0; color: #b3c1b2; font-size: 11px; line-height: 1.5; }.decision-skip { background: rgba(246, 91, 91, .14) !important; color: #ffafaf !important; }.decision-enter, .decision-buy, .decision-accumulate { background: rgba(95, 210, 140, .15) !important; color: #a5f9bd !important; }.verdictempty { min-height: 150px; border: 1px dashed rgba(183, 219, 145, .16); border-radius: 10px; margin-top: 16px; }.verdictempty svg { width: 21px; color: #a1d77e; }.verdictempty p { max-width: 330px; margin: 9px 20px 0; font-size: 11px; line-height: 1.5; }.tokendetail-empty { min-height: 400px; padding: 30px; }.tokendetail-empty h2 { margin: 14px 0 7px; }.tokendetail-empty p { max-width: 360px; margin: 0; line-height: 1.5; }
+
+/* Decision replay is evidence-first: no wallet, no hidden fills, no fabricated P&L. */
+.paperlab,.paperledger{padding:22px 24px;border-bottom:1px solid rgba(183,219,145,.1)}.paperlab{background:linear-gradient(115deg,rgba(109,181,62,.11),transparent 57%)}.paperlab>header,.paperledger>header{display:flex;align-items:center;justify-content:space-between;gap:16px}.paperlab h3,.paperledger h3{margin:5px 0 0;font-size:18px}.paperlab>header>button,.verdictlab-actions button,.paperledger article button{display:inline-flex;align-items:center;gap:7px;padding:8px 10px;border:1px solid rgba(199,255,92,.3);border-radius:8px;background:rgba(110,168,62,.14);color:#e1ffb6;font:600 10px var(--font-ui);cursor:pointer}.paperlab>header>button svg{width:14px}.paperlab button:disabled,.verdictlab-actions button:disabled{opacity:.45;cursor:not-allowed}.paperlab>p{max-width:680px;margin:13px 0 15px;color:#9fb09d;font-size:11px;line-height:1.55}.paperlab-metrics{display:flex;gap:10px;flex-wrap:wrap}.paperlab-metrics span{display:grid;gap:3px;min-width:118px;padding:9px 11px;border:1px solid rgba(183,219,145,.13);border-radius:9px;background:rgba(3,10,5,.3)}.paperlab-metrics strong{color:#e7ffbc;font:600 18px var(--font-mono)}.paperlab-metrics small{color:#829182;font-size:9px}.verdictlab-actions{grid-column:1/-1;display:flex;align-items:center;gap:8px;flex-wrap:wrap}.evaluation-correct{color:#a9f9bc!important}.evaluation-incorrect{color:#ffabab!important}.evaluation-flat{color:#d8e2d2!important}.paperledger{background:rgba(3,10,5,.18)}.paperledger>header>span{display:grid;place-items:center;min-width:21px;height:21px;padding:0 6px;border-radius:999px;background:rgba(199,255,92,.12);color:#dfff9a}.paperledger article{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:10px;align-items:center;margin-top:12px;padding:12px;border:1px solid rgba(183,219,145,.12);border-radius:10px;background:rgba(3,10,5,.35)}.paperledger article>b{padding:5px 7px;border-radius:5px;font:700 9px var(--font-mono);text-transform:uppercase}.paperstatus-pending{background:rgba(234,190,77,.14);color:#ffe29a}.paperstatus-open{background:rgba(86,175,216,.15);color:#aee7ff}.paperstatus-closed{background:rgba(95,210,140,.15);color:#a5f9bd}.paperstatus-skipped{background:rgba(156,166,160,.14);color:#c5d0c4}.paperledger article>span,.paperledger article small{color:#90a090;font:10px var(--font-mono)}.paperledger article>strong{font:600 13px var(--font-mono)}.paperledger article>strong.positive{color:#a5f9bd}.paperledger article>strong.negative{color:#ffadad}.paperledger article>small{grid-column:1/-1}.paperledger-empty{display:grid;justify-items:center;gap:8px;min-height:105px;padding:18px;color:#849584;text-align:center}.paperledger-empty svg{width:21px;color:#c7ff5c}.paperledger-empty p{max-width:390px;margin:0;font-size:11px;line-height:1.5}
+.scorecards{display:grid;gap:8px;margin-top:18px;padding-top:16px;border-top:1px solid rgba(183,219,145,.13)}.scorecards>header{display:flex;align-items:baseline;justify-content:space-between;gap:12px}.scorecards>header>b{color:#dfffaa;font:700 10px var(--font-mono);letter-spacing:.1em}.scorecards>header>small,.scorecards-empty{color:#819282;font:10px var(--font-mono)}.scorecards article{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:10px;padding:8px 10px;border:1px solid rgba(183,219,145,.11);border-radius:8px;background:rgba(3,10,5,.24)}.scorecards article span{display:grid;gap:2px;min-width:0}.scorecards article span>b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}.scorecards article span>small,.scorecards article em{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#859685;font:9px var(--font-mono)}.scorecards article>strong{color:#dfff9a;font:600 13px var(--font-mono)}
+
+/* Keep the new on-chain source within the Signal Room palette. */
+.sourcepills button.onchain, .sourcepills button.onchain.active { border-color: rgba(199, 255, 92, .46) !important; color: #dfff9a !important; background: rgba(113, 177, 63, .18) !important; box-shadow: inset 0 0 0 1px rgba(199,255,92,.09) !important; }.onchainsourcehint { border-color: rgba(199,255,92,.25) !important; background: linear-gradient(105deg, #122016, #101912) !important; color: #dfffab !important; }.onchainsourcehint>svg, .onchainsourcehint code { color: #c7ff5c !important; }.onchainsourcehint b { color: #edffd1 !important; }.onchainsourcehint small { color: #a7bca2 !important; }
+
+@media (max-width: 760px) {
+  .agentpicker { z-index: 450 !important; }
+  h1, h2 { letter-spacing: -.04em !important; }
+  .tokenboard { padding: 28px 18px; }.tokenboard-head, .tokenboard-track, .tokenboard-grid, .tokendetail>header { align-items: stretch; flex-direction: column; }.tokenboard-network { width: max-content; }.tokenboard-track form { width: 100%; grid-template-columns: 1fr; }.tokenlist { flex-basis: auto; }.tokenactions { margin-left: 0; }.tokenfacts { gap: 13px; flex-wrap: wrap; }.tokenverdicts article,.paperledger article { grid-template-columns: 1fr; gap: 6px; }.paperlab>header{align-items:flex-start;flex-direction:column}.tradingtemplates { grid-template-columns: 1fr; }.tradingtemplatecards { grid-template-columns: 1fr; }
+}
+/* Owner console: deliberately compact, data-first and visually separate from
+   the team workspace without creating a second design system. */
+.fatal-screen { min-height:100vh; display:grid; place-content:center; gap:12px; padding:28px; text-align:center; color:#e9f3e3; background:radial-gradient(circle at 50% 30%,#223426,#0d1110 55%); }.fatal-screen .brandmark { margin:0 auto 10px; }.fatal-screen h1 { margin:0; font-size:34px; }.fatal-screen p:not(.eyebrow) { margin:0; color:#a9b5a8; }.fatal-screen button { justify-self:center; margin-top:10px; border:1px solid #8ee06a; border-radius:9px; padding:10px 16px; background:#1b3020; color:#eaffdf; cursor:pointer; }
+.verificationbar { position:sticky; z-index:120; top:10px; display:flex; align-items:center; gap:10px; margin:14px 20px 0; padding:10px 13px; border:1px solid rgba(229,179,91,.38); border-radius:10px; background:rgba(94,70,25,.94); color:#e5ca94; font-size:12px; box-shadow:0 12px 30px rgba(0,0,0,.2); }.verificationbar svg { width:17px; flex:none; }.verificationbar span { flex:1; }.verificationbar button { border:1px solid rgba(229,179,91,.5); border-radius:7px; background:transparent; color:#f2dcae; padding:6px 9px; cursor:pointer; font-size:11px; white-space:nowrap; }
+
+/* Product UI uses one typographic voice. The editorial face remains reserved
+   for the Signal Room landing and auth story, never for builder screens. */
+.projectshell, .builder, .inspector, .projecthead, .runlayout, .memorypage,
+.researchpage, .tokenboard, .nav, .workflowhistory { font-family:var(--font-ui); }
+.agentportrait { display:grid!important; place-items:center; overflow:hidden!important; padding:0!important; border:1px solid color-mix(in srgb, var(--agent-accent) 72%, white 10%)!important; background:radial-gradient(circle at 50% 22%, color-mix(in srgb, var(--agent-accent) 42%, transparent), #101914 70%)!important; box-shadow:0 0 0 2px rgba(6,13,9,.72), 0 10px 24px color-mix(in srgb, var(--agent-accent) 30%, transparent)!important; }
+.agentportrait img { width:118%; height:118%; max-width:none; object-fit:contain; object-position:center 58%; transform:translateY(7%); filter:saturate(1.08) contrast(1.04); transition:transform .26s ease, filter .26s ease; }
+button:hover .agentportrait img, .agentportrait:hover img { transform:translateY(4%) scale(1.05); filter:saturate(1.24) contrast(1.08); }
+.signal-crew-foot>em { margin-left:auto; padding:5px 7px; border:1px solid rgba(242,191,117,.25); border-radius:999px; color:#e8c58c; background:rgba(125,83,28,.13); font:600 8px var(--font-mono); font-style:normal; }.signal-crew-foot>em.ready { border-color:rgba(102,229,174,.27); color:#9de8c3; background:rgba(52,130,92,.14); }
+
+/* Research makes its evidence path visible before and after a run. */
+.research-method { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:7px; margin:0 0 15px; padding:10px; border:1px solid rgba(199,255,92,.12); border-radius:13px; background:rgba(5,14,9,.34); }
+.research-method article { display:grid; grid-template-columns:17px 23px minmax(0,1fr); gap:7px; align-items:start; min-width:0; padding:7px 5px; color:#90a38e; }
+.research-method article+article { border-left:1px solid rgba(199,255,92,.1); padding-left:12px; }
+.research-method article>span { color:#7e9b69; font:600 8px var(--font-mono); }
+.research-method article>svg { width:17px; color:#c7ff5c; }
+.research-method b,.research-method small { display:block; }.research-method b { color:#dcebd4; font-size:10px; }.research-method small { margin-top:2px; font-size:8px; line-height:1.35; }
+.research-depth-note { margin:11px 3px 0; color:#94aa92; font-size:10px; }
+.researchmetrics { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)) minmax(190px,1.35fr); gap:1px; border-bottom:1px solid rgba(183,219,145,.12); background:rgba(183,219,145,.1); }
+.researchmetrics article { min-height:92px; padding:15px 17px; background:rgba(8,17,11,.78); }.researchmetrics small,.researchmetrics span { display:block; }.researchmetrics small { color:#83a075; font:600 8px var(--font-mono); letter-spacing:.1em; }.researchmetrics>b { display:block; margin:8px 0 3px; color:#edffd2; font-size:24px; letter-spacing:-.05em; }.researchmetrics>article>span { color:#879887; font-size:9px; }.researchattribution>div { display:flex; overflow:hidden; gap:2px; height:29px; margin-top:12px; border-radius:5px; }.researchattribution>div>span { display:flex; min-width:0; align-items:center; justify-content:space-between; gap:5px; padding:0 7px; overflow:hidden; color:#dff9bf; font:600 8px var(--font-mono); white-space:nowrap; background:linear-gradient(90deg,rgba(137,214,78,.34),rgba(75,159,116,.25)); }.researchattribution>div>span:nth-child(2n) { background:linear-gradient(90deg,rgba(99,169,215,.33),rgba(66,118,190,.22)); }.researchattribution>div>span:nth-child(3n) { background:linear-gradient(90deg,rgba(201,153,71,.33),rgba(176,80,76,.22)); }
+
+/* Real workspace analytics replaces decorative market statistics. */
+.signal-analytics { max-width:1180px; margin:44px auto 0; padding:22px; border:1px solid rgba(204,250,150,.17); border-radius:20px; color:#edf5e8; background:linear-gradient(145deg,rgba(18,33,21,.94),rgba(7,14,10,.98)); box-shadow:inset 0 1px rgba(240,255,215,.04),0 28px 80px rgba(0,0,0,.18); }
+.signal-analytics>header,.signal-performance>header,.signal-attribution>header { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; }.signal-analytics>header p { margin:0; color:#a6ce83; font:600 9px var(--font-mono); letter-spacing:.12em; }.signal-analytics h2 { margin:7px 0 5px; font-size:27px; letter-spacing:-.05em; }.signal-analytics>header>div>span { display:block; color:#94a494; font-size:10px; }.signal-analytics-live { flex:none; padding:7px 9px; border:1px solid rgba(199,255,92,.23); border-radius:999px; color:#bfe993; font:600 8px var(--font-mono); letter-spacing:.07em; white-space:nowrap; }.signal-analytics-live i { display:inline-block; width:6px; height:6px; margin-right:5px; border-radius:50%; background:#6ae6ae; box-shadow:0 0 9px #6ae6ae; }
+.signal-analytics-kpis { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:9px; margin-top:20px; }.signal-analytics-kpis article { min-height:104px; padding:15px; border:1px solid rgba(204,250,150,.13); border-radius:12px; background:rgba(5,14,9,.52); }.signal-analytics-kpis small,.signal-analytics-kpis span { display:block; }.signal-analytics-kpis small { color:#87a27c; font:600 8px var(--font-mono); letter-spacing:.1em; }.signal-analytics-kpis b { display:block; margin:12px 0 4px; color:#ecffd7; font-size:29px; letter-spacing:-.06em; }.signal-analytics-kpis span { color:#849382; font-size:9px; }
+.signal-analytics-body { display:grid; grid-template-columns:minmax(0,1.55fr) minmax(260px,.85fr); gap:10px; margin-top:10px; }.signal-performance,.signal-attribution { min-height:268px; padding:16px; border:1px solid rgba(204,250,150,.13); border-radius:12px; background:rgba(5,14,9,.46); }.signal-performance header b,.signal-attribution header b { font-size:12px; }.signal-performance header span,.signal-attribution header span { color:#93a791; font-size:9px; }.signal-performance header i,.signal-performance header em { display:inline-block; width:7px; height:7px; margin:0 4px 0 7px; border-radius:2px; background:#7096ef; }.signal-performance header em { border-radius:50%; background:#c9ff68; }.signal-performance svg { display:block; width:100%; height:219px; margin-top:6px; color:#a1b69c; }.signal-performance rect { fill:url(#signal-bars); }.signal-performance path:not(:first-child) { stroke:#c9ff68; }.signal-performance circle { fill:#edffb7; }.signal-performance text { fill:#7f917e; font:9px var(--font-mono); }.signal-attribution>div { display:grid; grid-template-columns:minmax(66px,.8fr) minmax(80px,1fr) auto; gap:8px; align-items:center; margin-top:16px; color:#c7d5c3; font-size:10px; }.signal-attribution>div i { display:block; height:7px; overflow:hidden; border-radius:9px; background:#19271c; }.signal-attribution>div i b { display:block; height:100%; border-radius:inherit; background:linear-gradient(90deg,#7faee8,#c9ff68); }.signal-attribution>div em { color:#869686; font:9px var(--font-mono); font-style:normal; white-space:nowrap; }.signal-attribution>p { margin:32px 0; color:#829181; font-size:10px; line-height:1.6; }
+
+/* A workflow draft is a deliberate checkpoint, not an unexplained empty chat. */
+.runlaunchcard { width:min(610px,calc(100% - 32px)); margin:60px auto 18px; padding:31px; border:1px solid rgba(199,255,92,.28); border-radius:18px; text-align:center; background:radial-gradient(circle at 50% 0,rgba(155,229,82,.15),transparent 48%),linear-gradient(145deg,#132016,#09110c); box-shadow:0 24px 70px rgba(0,0,0,.25); }.runlaunch-orbit { display:grid; width:45px; height:45px; place-items:center; margin:0 auto 15px; border:1px solid rgba(210,255,138,.45); border-radius:14px; color:#dfff9a; background:rgba(151,220,76,.16); box-shadow:0 0 28px rgba(176,247,91,.17); }.runlaunch-orbit svg { width:22px; }.runlaunchcard .eyebrow { margin:0; color:#a5d47e; }.runlaunchcard h3 { margin:6px 0 9px; color:#eff9e8; font-size:20px; }.runlaunchcard>p:not(.eyebrow) { max-width:450px; margin:0 auto; color:#9eaf9d; font-size:12px; line-height:1.55; }.runlaunchcard>div { display:flex; justify-content:center; gap:8px; margin-top:20px; }.runlaunchcard button { padding:9px 12px; font-size:11px; }.runlaunchcard button svg { width:15px; }
+
+@media (max-width:850px) { .research-method { grid-template-columns:1fr 1fr; }.research-method article:nth-child(3) { border-left:0; }.researchmetrics { grid-template-columns:1fr 1fr; }.signal-analytics-kpis { grid-template-columns:1fr 1fr; }.signal-analytics-body { grid-template-columns:1fr; } }
+@media (max-width:560px) { .research-method { grid-template-columns:1fr; }.research-method article+article { border-left:0; border-top:1px solid rgba(199,255,92,.1); padding-left:5px; padding-top:10px; }.researchmetrics { grid-template-columns:1fr; }.researchattribution { min-height:78px!important; }.signal-analytics { margin-top:26px; padding:15px; }.signal-analytics>header { flex-direction:column; }.signal-analytics-kpis { grid-template-columns:1fr 1fr; }.signal-analytics-kpis article { min-height:92px; padding:12px; }.signal-analytics-kpis b { font-size:24px; }.runlaunchcard { margin-top:28px; padding:24px 17px; } }

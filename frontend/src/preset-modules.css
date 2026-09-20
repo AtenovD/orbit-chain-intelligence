@@ -1,0 +1,24 @@
+/* Selectively adapted interface modules for Orbit. */
+.skillslot.filled{position:relative;isolation:isolate;overflow:hidden;border-color:transparent;background:transparent;box-shadow:0 18px 50px rgba(0,0,0,.2)}
+.skillslot.filled::before{content:"";position:absolute;z-index:-2;inset:-180%;background:conic-gradient(from 0deg,transparent 0 36%,rgba(88,229,222,.95) 46%,rgba(133,115,255,.9) 53%,transparent 64%);animation:skill-border-orbit 7s linear infinite}
+.skillslot.filled::after{content:"";position:absolute;z-index:-1;inset:1px;border-radius:13px;background:radial-gradient(circle at 5% 92%,rgba(28,157,166,.25),transparent 42%),radial-gradient(circle at 88% 18%,rgba(112,90,226,.18),transparent 45%),#191b23;box-shadow:inset 0 -18px 34px rgba(86,210,210,.035)}
+.skillslot.filled>*{position:relative;z-index:1}.skillslot.filled .skillmark{color:#a9fffb;background:linear-gradient(145deg,rgba(45,216,211,.2),rgba(115,91,231,.22));box-shadow:0 0 24px rgba(69,204,211,.12)}
+.skillslot.filled>button{background:rgba(35,39,49,.84);backdrop-filter:blur(8px)}
+
+.orbit-process{display:flex;align-items:center;gap:16px;margin:17px 2px 0;padding:12px 14px;border:1px solid rgba(97,105,129,.3);border-radius:14px;background:linear-gradient(105deg,rgba(18,21,28,.78),rgba(29,30,43,.72));box-shadow:inset 0 1px rgba(255,255,255,.035);animation:process-arrive .28s ease-out both}
+.process-orb{position:relative;width:68px;height:68px;flex:0 0 68px;display:grid;place-items:center;border-radius:50%;overflow:hidden;background:#11141b;box-shadow:0 0 28px rgba(101,83,232,.16)}
+.process-orb::before{content:"";position:absolute;inset:0;border-radius:inherit;animation:process-rotate 2.4s linear infinite;box-shadow:0 7px 14px #b8fff8 inset,0 19px 22px #7df260 inset,0 48px 44px #192f78 inset}
+.process-orb::after{content:"";position:absolute;inset:7px;border-radius:inherit;background:radial-gradient(circle at 50% 35%,#252a39,#11131a 72%);box-shadow:inset 0 1px rgba(255,255,255,.08)}
+.process-orb span{position:relative;z-index:2;display:flex;max-width:56px;justify-content:center;color:#edffe8;font:600 6.5px/1 var(--font-mono);letter-spacing:.035em}
+.process-orb i{font-style:normal;opacity:.38;animation:process-letter 1.5s ease-in-out infinite}
+.process-copy{display:grid;gap:5px;min-width:0}.process-copy b{color:#e3ffdc;font:600 9px/1.2 var(--font-mono);letter-spacing:.12em}.process-copy small{color:#858b9a;font-size:10px;line-height:1.45}
+
+.connector-alert{display:flex;gap:12px;margin:13px 0 17px;padding:12px 14px;border:1px solid rgba(229,174,79,.25);border-left:3px solid #dca953;border-radius:10px;background:linear-gradient(90deg,rgba(91,66,26,.2),rgba(31,31,36,.72));color:#d6c39d}
+.connector-alert>svg{width:18px;height:18px;flex:none;margin-top:1px;color:#e0ad53}.connector-alert div{display:grid;gap:3px}.connector-alert b{font-size:10px;color:#f0d9ac}.connector-alert p{margin:0;color:#aaa294;font-size:10px;line-height:1.5}
+
+@keyframes skill-border-orbit{to{transform:rotate(360deg)}}
+@keyframes process-rotate{to{transform:rotate(360deg)}}
+@keyframes process-letter{0%,100%{opacity:.35;transform:translateY(0)}35%{opacity:1;transform:translateY(-1px) scale(1.08)}}
+@keyframes process-arrive{from{opacity:0;transform:translateY(5px)}}
+@media(max-width:600px){.orbit-process{align-items:flex-start}.process-orb{width:58px;height:58px;flex-basis:58px}.process-orb span{font-size:5.5px}.process-copy small{font-size:9px}}
+@media(prefers-reduced-motion:reduce){.skillslot.filled::before,.process-orb::before,.process-orb i,.orbit-process{animation:none!important}}

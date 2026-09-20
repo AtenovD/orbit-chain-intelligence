@@ -1,0 +1,221 @@
+.cinematic-home .attachbutton {
+  position: relative;
+  isolation: isolate;
+  width: 184px;
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow: hidden;
+  padding: 6px 10px 6px 7px;
+  border: 1px solid rgba(125, 130, 148, .32);
+  border-radius: 13px;
+  background: linear-gradient(145deg, rgba(36, 39, 48, .88), rgba(24, 27, 34, .78));
+  color: #d3d6df;
+  box-shadow: inset 0 1px rgba(255, 255, 255, .035), 0 8px 25px rgba(0, 0, 0, .16);
+  cursor: pointer;
+  transition: width .25s ease, border-color .25s ease, transform .25s ease, box-shadow .25s ease;
+}
+
+.cinematic-home .attachbutton::before {
+  content: "";
+  position: absolute;
+  z-index: -2;
+  inset: -100% -40%;
+  opacity: 0;
+  background: conic-gradient(from 220deg, transparent 0 28%, #88f06e 38%, #46b6ce 48%, #ff6c74 60%, transparent 72%);
+  transition: opacity .28s ease;
+  animation: materialBorder 4.5s linear infinite;
+}
+
+.cinematic-home .attachbutton::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 1px;
+  border-radius: 11px;
+  background: linear-gradient(145deg, rgba(38, 41, 51, .97), rgba(23, 26, 33, .96));
+  transition: background .25s ease;
+}
+
+.cinematic-home .attachbutton:hover,
+.cinematic-home .attachbutton:focus-within {
+  border-color: transparent;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(47, 41, 114, .3), 0 0 0 3px rgba(116, 110, 240, .08);
+}
+
+.cinematic-home .attachbutton:hover::before,
+.cinematic-home .attachbutton:focus-within::before,
+.cinematic-home .attachbutton.has-files::before {
+  opacity: .72;
+}
+
+.cinematic-home .attachbutton:hover::after,
+.cinematic-home .attachbutton:focus-within::after {
+  background: linear-gradient(135deg, rgba(50, 47, 81, .98), rgba(28, 33, 44, .97));
+}
+
+.attachicon {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(126, 121, 238, .34);
+  border-radius: 10px;
+  background: linear-gradient(145deg, rgba(112, 105, 229, .23), rgba(47, 53, 72, .3));
+  color: #c3ffb4;
+  transition: transform .25s cubic-bezier(.2, .8, .2, 1), box-shadow .25s ease;
+}
+
+.attachicon > svg:first-child {
+  width: 15px;
+  height: 15px;
+  transition: transform .28s cubic-bezier(.2, .8, .2, 1);
+}
+
+.attachicon > svg:last-child {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  width: 13px;
+  height: 13px;
+  padding: 2px;
+  border: 2px solid #1d2028;
+  border-radius: 50%;
+  background: #8aef71;
+  color: white;
+  transition: transform .25s ease, background .25s ease;
+}
+
+.attachbutton:hover .attachicon {
+  transform: rotate(-5deg) scale(1.05);
+  box-shadow: 0 0 18px rgba(112, 105, 229, .28);
+}
+
+.attachbutton:hover .attachicon > svg:first-child {
+  transform: rotate(12deg);
+}
+
+.attachbutton:hover .attachicon > svg:last-child {
+  transform: rotate(90deg) scale(1.08);
+  background: #ff6977;
+}
+
+.attachcopy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  text-align: left;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+}
+
+.attachcopy b {
+  overflow: hidden;
+  color: #e4e6ec;
+  font-size: 10px;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attachcopy small {
+  overflow: hidden;
+  color: #7f8592;
+  font-size: 7px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attachbutton > i {
+  position: absolute;
+  top: 4px;
+  right: 5px;
+  padding: 2px 4px;
+  border-radius: 7px;
+  background: #7bd964;
+  color: #fff;
+  font: normal 6px var(--font-mono);
+  box-shadow: 0 0 11px rgba(105, 100, 217, .45);
+}
+
+.startcomposer.drag-active {
+  border-color: rgba(120, 114, 242, .8) !important;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, .5), 0 0 0 4px rgba(116, 110, 240, .12) !important;
+}
+
+.materialdrop {
+  position: absolute !important;
+  z-index: 20 !important;
+  inset: 8px;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 6px;
+  border: 1px dashed rgba(154, 149, 255, .72);
+  border-radius: 13px;
+  background: rgba(18, 20, 29, .94);
+  text-align: center;
+  backdrop-filter: blur(13px);
+  animation: materialDropIn .18s ease-out both;
+}
+
+.materialdrop > span {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #84ea6b, #4a72bf);
+  box-shadow: 0 8px 26px rgba(92, 85, 220, .35);
+}
+
+.materialdrop svg {
+  width: 17px;
+}
+
+.materialdrop b {
+  font-size: 11px;
+}
+
+.materialdrop small {
+  color: #8d93a1;
+  font-size: 8px;
+}
+
+.materialchips > span > svg {
+  width: 11px;
+  color: #b8ffa6;
+}
+
+@keyframes materialBorder {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes materialDropIn {
+  from { opacity: 0; transform: scale(.98); }
+}
+
+@media (max-width: 640px) {
+  .cinematic-home .attachbutton {
+    width: 44px;
+    min-width: 44px;
+    padding: 5px;
+  }
+
+  .attachcopy,
+  .attachbutton > i {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cinematic-home .attachbutton::before,
+  .materialdrop {
+    animation: none;
+  }
+}

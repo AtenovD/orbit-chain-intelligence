@@ -1,0 +1,109 @@
+services:
+  api:
+    build:
+      context: .
+      args:
+        VITE_AUTH_REQUIRED: ${AUTH_REQUIRED:-true}
+        VITE_SENTRY_DSN: ${VITE_SENTRY_DSN:-}
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+    environment:
+      APP_ENV: production
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-orchestrator}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-orchestrator}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8000}
+      FILE_STORAGE_DIR: /app/data/files
+      AUTH_REQUIRED: ${AUTH_REQUIRED:-true}
+      AUTH_RATE_LIMIT_PER_MINUTE: ${AUTH_RATE_LIMIT_PER_MINUTE:-10}
+      EXPENSIVE_RATE_LIMIT_PER_MINUTE: ${EXPENSIVE_RATE_LIMIT_PER_MINUTE:-12}
+      EMAIL_VERIFICATION_REQUIRED: ${EMAIL_VERIFICATION_REQUIRED:-true}
+      EMAIL_VERIFICATION_TTL_MINUTES: ${EMAIL_VERIFICATION_TTL_MINUTES:-1440}
+      ADMIN_EMAILS: ${ADMIN_EMAILS:-}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      PUBLIC_URL: ${PUBLIC_URL:-http://localhost:8000}
+      GOOGLE_AUTH_CLIENT_ID: ${GOOGLE_AUTH_CLIENT_ID:-}
+      GOOGLE_AUTH_CLIENT_SECRET: ${GOOGLE_AUTH_CLIENT_SECRET:-}
+      GOOGLE_AUTH_CALLBACK_URL: ${GOOGLE_AUTH_CALLBACK_URL:-}
+      GOOGLE_AUTH_STATE_TTL_SECONDS: ${GOOGLE_AUTH_STATE_TTL_SECONDS:-600}
+      TWITTER_OAUTH_CLIENT_ID: ${TWITTER_OAUTH_CLIENT_ID:-}
+      TWITTER_OAUTH_CLIENT_SECRET: ${TWITTER_OAUTH_CLIENT_SECRET:-}
+      TWITTER_OAUTH_CALLBACK_URL: ${TWITTER_OAUTH_CALLBACK_URL:-}
+      TWITTER_OAUTH_SCOPES: ${TWITTER_OAUTH_SCOPES:-tweet.read users.read offline.access}
+      TWITTER_OAUTH_STATE_TTL_SECONDS: ${TWITTER_OAUTH_STATE_TTL_SECONDS:-600}
+      GOOGLE_MODEL_OAUTH_CLIENT_ID: ${GOOGLE_MODEL_OAUTH_CLIENT_ID:-}
+      GOOGLE_MODEL_OAUTH_CLIENT_SECRET: ${GOOGLE_MODEL_OAUTH_CLIENT_SECRET:-}
+      GOOGLE_MODEL_OAUTH_CALLBACK_URL: ${GOOGLE_MODEL_OAUTH_CALLBACK_URL:-}
+      GOOGLE_MODEL_OAUTH_SCOPES: ${GOOGLE_MODEL_OAUTH_SCOPES:-openid email profile https://www.googleapis.com/auth/cloud-platform https://www.googleapis.com/auth/generative-language.retriever}
+      GOOGLE_MODEL_OAUTH_STATE_TTL_SECONDS: ${GOOGLE_MODEL_OAUTH_STATE_TTL_SECONDS:-600}
+      CONTEXT_OAUTH_STATE_TTL_SECONDS: ${CONTEXT_OAUTH_STATE_TTL_SECONDS:-600}
+      GITHUB_OAUTH_CLIENT_ID: ${GITHUB_OAUTH_CLIENT_ID:-}
+      GITHUB_OAUTH_CLIENT_SECRET: ${GITHUB_OAUTH_CLIENT_SECRET:-}
+      GITHUB_OAUTH_CALLBACK_URL: ${GITHUB_OAUTH_CALLBACK_URL:-}
+      GITHUB_OAUTH_SCOPES: ${GITHUB_OAUTH_SCOPES:-read:user repo}
+      GITHUB_OAUTH_STATE_TTL_SECONDS: ${GITHUB_OAUTH_STATE_TTL_SECONDS:-600}
+      NOTION_OAUTH_CLIENT_ID: ${NOTION_OAUTH_CLIENT_ID:-}
+      NOTION_OAUTH_CLIENT_SECRET: ${NOTION_OAUTH_CLIENT_SECRET:-}
+      NOTION_OAUTH_CALLBACK_URL: ${NOTION_OAUTH_CALLBACK_URL:-}
+      NOTION_WEBHOOK_VERIFICATION_TOKEN: ${NOTION_WEBHOOK_VERIFICATION_TOKEN:-}
+      SLACK_OAUTH_CLIENT_ID: ${SLACK_OAUTH_CLIENT_ID:-}
+      SLACK_OAUTH_CLIENT_SECRET: ${SLACK_OAUTH_CLIENT_SECRET:-}
+      SLACK_OAUTH_CALLBACK_URL: ${SLACK_OAUTH_CALLBACK_URL:-}
+      SLACK_OAUTH_SCOPES: ${SLACK_OAUTH_SCOPES:-channels:read,groups:read,channels:history,groups:history,users:read,files:read}
+      SLACK_SIGNING_SECRET: ${SLACK_SIGNING_SECRET:-}
+      GOOGLE_CONTEXT_OAUTH_CLIENT_ID: ${GOOGLE_CONTEXT_OAUTH_CLIENT_ID:-}
+      GOOGLE_CONTEXT_OAUTH_CLIENT_SECRET: ${GOOGLE_CONTEXT_OAUTH_CLIENT_SECRET:-}
+      GOOGLE_CONTEXT_OAUTH_CALLBACK_URL: ${GOOGLE_CONTEXT_OAUTH_CALLBACK_URL:-}
+      GOOGLE_DRIVE_OAUTH_SCOPES: ${GOOGLE_DRIVE_OAUTH_SCOPES:-openid email profile https://www.googleapis.com/auth/drive.readonly}
+      YOUTUBE_OAUTH_SCOPES: ${YOUTUBE_OAUTH_SCOPES:-openid email profile https://www.googleapis.com/auth/youtube.readonly}
+      CONTEXT_SYNC_INTERVAL_SECONDS: ${CONTEXT_SYNC_INTERVAL_SECONDS:-900}
+      RESEARCH_BRAVE_API_KEY: ${RESEARCH_BRAVE_API_KEY:-}
+      RESEARCH_YOUTUBE_API_KEY: ${RESEARCH_YOUTUBE_API_KEY:-}
+      RESEARCH_TIKTOK_ACCESS_TOKEN: ${RESEARCH_TIKTOK_ACCESS_TOKEN:-}
+      RESEARCH_INSTAGRAM_ACCESS_TOKEN: ${RESEARCH_INSTAGRAM_ACCESS_TOKEN:-}
+      RESEARCH_INSTAGRAM_ACCOUNT_ID: ${RESEARCH_INSTAGRAM_ACCOUNT_ID:-}
+      SECRET_ENCRYPTION_KEY: ${SECRET_ENCRYPTION_KEY:?Set SECRET_ENCRYPTION_KEY in .env}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-Orbit <no-reply@localhost>}
+      SMTP_STARTTLS: ${SMTP_STARTTLS:-true}
+    ports:
+      - "${API_BIND:-127.0.0.1:8000}:8000"
+    volumes:
+      - orbit_files:/app/data/files
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-orchestrator}
+      POSTGRES_USER: ${POSTGRES_USER:-orchestrator}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-orchestrator} -d ${POSTGRES_DB:-orchestrator}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postgres_data:
+  orbit_files:

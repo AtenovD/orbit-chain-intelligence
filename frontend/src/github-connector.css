@@ -1,0 +1,4 @@
+.connectionactions{display:flex;gap:8px}.connectionactions button{display:flex;align-items:center;gap:7px}.connectionactions svg{width:16px}
+.githubcard{background:radial-gradient(circle at 8% 20%,#86ff6818,transparent 45%),var(--surface)}.githubcard.connected{border-color:#4f8d71}.githubicon{background:#f3f5ff;color:#161820}.githubicon svg{width:22px}
+.githubmodal{width:min(580px,calc(100vw - 32px))}.githubintro{display:flex;gap:14px;padding:15px;margin:12px 0 18px;border:1px solid #353944;border-radius:12px;background:#1d2027}.githubintro>svg{width:28px;flex:none;color:#b9ffa7}.githubintro b{font-size:13px}.githubintro p{margin:6px 0 0;color:#969aa6;font-size:11px;line-height:1.55}
+@media(max-width:650px){.connectionactions{width:100%}.connectionactions button{flex:1;justify-content:center}}

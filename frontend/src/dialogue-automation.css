@@ -1,0 +1,64 @@
+.automationtrigger{position:relative}
+.automationtrigger>i{position:absolute;right:5px;top:5px;width:6px;height:6px;border-radius:50%;background:#55e6ad;box-shadow:0 0 0 3px #55e6ad20,0 0 12px #55e6ad}
+.automationback{padding:18px}
+.automationmodal{width:min(1160px,calc(100vw - 36px));height:min(820px,calc(100vh - 36px));padding:0;display:flex;flex-direction:column;overflow:hidden;background:linear-gradient(145deg,#202228,#181a1f);border-color:#444853}
+.automationmodal>header{flex:0 0 auto;margin:0;padding:20px 22px 16px;border-bottom:1px solid var(--border);background:#1c1e23}
+.automationmodal>header h2{font-size:20px;margin:2px 0 5px}
+.automationmodal>header small{display:block;color:var(--muted);font-size:11px}
+.automationswitch{margin:16px 20px 12px;padding:14px 16px;border:1px solid #383c46;border-radius:12px;background:#202229;display:grid;grid-template-columns:42px minmax(0,1fr) auto;align-items:center;gap:13px;transition:border-color .2s,background .2s,box-shadow .2s}
+.automationswitch.on{border-color:#63a453;background:linear-gradient(110deg,#2d4228,#202229 72%);box-shadow:inset 0 1px #ffffff08}
+.automationicon{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;color:#b5ffa2;background:#36512f}
+.automationicon svg{width:19px}
+.automationswitch b{font-size:13px}
+.automationswitch p{font-size:10px;line-height:1.45;color:var(--muted);margin:4px 0 0;max-width:650px}
+.toggleswitch{width:45px;height:25px;padding:2px;border:0;border-radius:999px;background:#3b3e47!important;justify-content:flex-start}
+.toggleswitch span{width:21px;height:21px;border-radius:50%;background:#fff;box-shadow:0 2px 7px #0008;transition:transform .2s}
+.automationswitch.on .toggleswitch{background:#86f06c!important}
+.automationswitch.on .toggleswitch span{transform:translateX(20px)}
+.toggleswitch:disabled{cursor:default;opacity:.72}
+.automationrunning,.automationhint{display:flex;align-items:center;gap:10px;color:#aeb1ba}
+.automationrunning{margin:0 20px 10px;padding:10px 13px;border-radius:9px;border:1px solid #285743;background:#173126}
+.automationrunning svg{color:#59dca5}
+.automationrunning b{font-size:11px;color:#dff9ed}
+.automationrunning p{font-size:9px;margin:3px 0 0;color:#82aa98}
+.automationempty{flex:1;min-height:240px;display:grid;place-content:center;justify-items:center;text-align:center;padding:30px;color:var(--muted)}
+.automationempty>div{width:58px;height:58px;border-radius:18px;display:grid;place-items:center;color:#b8ffa6;background:#324d2b;box-shadow:0 0 40px #89f16f25}
+.automationempty h3{color:var(--text);margin:18px 0 6px}
+.automationempty p{max-width:470px;font-size:11px;line-height:1.6;margin:0}
+.automationeditor{flex:1;min-height:0;margin:0 20px;border:1px solid var(--border);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;background:#191b20}
+.automationhint{padding:9px 13px;border-bottom:1px solid var(--border);background:#202229;font-size:10px}
+.automationhint svg{width:15px;color:#6fdbab}
+.flowwrap.embedded{flex:1;min-height:0}
+.flowwrap.embedded .flowbar{height:50px;flex:0 0 50px;background:#1c1e23}
+.flowwrap.embedded .flowbody{min-height:0}
+.flowwrap.embedded .palette{overflow:auto;flex:0 0 190px}
+.automationloading{flex:1;display:flex;align-items:center;justify-content:center;gap:10px;color:var(--muted);font-size:11px}
+.automationloading svg{animation:spin 1.4s linear infinite}
+.automationmodal>footer{flex:0 0 auto;margin:0;padding:14px 20px;border-top:1px solid var(--border);background:#1c1e23}
+.flowbody{min-height:0}
+.flowcanvas{flex:1;min-width:0;position:relative}
+.flowcanvas>.react-flow{position:absolute;inset:0}
+.flowinspector{width:290px;flex:0 0 290px;padding:16px;background:#18191d;border-left:1px solid var(--border);overflow:auto;display:flex;flex-direction:column;gap:14px}
+.flowinspector header{display:flex;align-items:flex-start;justify-content:space-between;padding-bottom:13px;border-bottom:1px solid var(--border)}
+.flowinspector header .eyebrow{margin-bottom:4px}
+.flowinspector header button{padding:5px;background:transparent;border:0}
+.flowinspector input,.flowinspector select{width:100%;min-height:40px;color:#fff;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px}
+.flowtoolnotice{display:flex;gap:9px;padding:10px;border:1px solid #41613b;border-radius:9px;background:#243321}
+.flowtoolnotice svg{width:17px;flex:0 0 17px;color:var(--primary)}
+.flowtoolnotice p{margin:0;color:#c7d3c4;font-size:10px;line-height:1.5}
+.flowinspector small{color:var(--muted);line-height:1.5}
+.flowinspector .flowdelete{margin-top:auto}
+@media(max-width:760px){
+  .automationback{padding:0}
+  .automationmodal{width:100vw;height:calc(100vh - 58px);max-height:none;border-radius:0;border-inline:0}
+  .automationmodal>header{padding:15px}
+  .automationswitch{margin:12px;padding:12px;grid-template-columns:36px minmax(0,1fr) auto}
+  .automationicon{width:34px;height:34px}
+  .automationeditor{margin:0 12px}
+  .flowwrap.embedded .palette{display:none}
+  .flowinspector{position:absolute;z-index:25;right:0;top:0;bottom:0;width:min(290px,88vw)}
+  .flowwrap.embedded .flowbar{height:auto;min-height:50px;padding:8px;gap:7px;flex-wrap:wrap}
+  .flowwrap.embedded .flowbar>div:last-child{margin-left:auto}
+  .flowwrap.embedded .validation{display:none}
+  .automationmodal>footer{padding:11px 12px}
+}
