@@ -276,3 +276,6 @@ button:hover .agentportrait img, .agentportrait:hover img { transform:translateY
 
 @media (max-width:850px) { .research-method { grid-template-columns:1fr 1fr; }.research-method article:nth-child(3) { border-left:0; }.researchmetrics { grid-template-columns:1fr 1fr; }.signal-analytics-kpis { grid-template-columns:1fr 1fr; }.signal-analytics-body { grid-template-columns:1fr; } }
 @media (max-width:560px) { .research-method { grid-template-columns:1fr; }.research-method article+article { border-left:0; border-top:1px solid rgba(199,255,92,.1); padding-left:5px; padding-top:10px; }.researchmetrics { grid-template-columns:1fr; }.researchattribution { min-height:78px!important; }.signal-analytics { margin-top:26px; padding:15px; }.signal-analytics>header { flex-direction:column; }.signal-analytics-kpis { grid-template-columns:1fr 1fr; }.signal-analytics-kpis article { min-height:92px; padding:12px; }.signal-analytics-kpis b { font-size:24px; }.runlaunchcard { margin-top:28px; padding:24px 17px; } }
+
+.devcredit { display:block; margin:2px 14px 12px; font:500 11px/1.4 var(--mono, monospace); letter-spacing:.04em; color:#6f8577; text-decoration:none; opacity:.75; transition:opacity .15s, color .15s; }
+.devcredit:hover, .devcredit:focus-visible { opacity:1; color:#a8f044; }

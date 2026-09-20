@@ -2312,6 +2312,16 @@ function Nav({
             </div>
           )}
         </div>
+        {open && (
+          <a
+            className="devcredit"
+            href="https://x.com/Atenov_D"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {language === "ru" ? "Разработчик" : "Developer"} · Atenov_D
+          </a>
+        )}
         {renameTarget && (
           <div
             className="modalback"

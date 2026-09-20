@@ -1,21 +1,68 @@
-<div align="center">
+<p align="center">
+  <img src="assets/banner.svg" alt="Orbit — See the signal before it becomes noise" width="100%">
+</p>
 
-<img src="assets/banner.svg" alt="Orbit — See the signal before it becomes noise" width="100%">
+<p align="center">
+  <a href="https://github.com/AtenovD/orbit-chain-intelligence/actions/workflows/ci.yml"><img src="https://github.com/AtenovD/orbit-chain-intelligence/actions/workflows/ci.yml/badge.svg" alt="CI status"></a>
+</p>
 
-<br>
+<p align="center">
+  <a href="https://github.com/AtenovD/orbit-chain-intelligence/stargazers"><img src="https://img.shields.io/github/stars/AtenovD/orbit-chain-intelligence?style=for-the-badge&color=yellow" alt="Stars"></a>
+  <a href="https://github.com/AtenovD/orbit-chain-intelligence/blob/main/LICENSE"><img src="https://img.shields.io/github/license/AtenovD/orbit-chain-intelligence?style=for-the-badge" alt="License"></a>
+  <a href="https://github.com/AtenovD/orbit-chain-intelligence/commits/main"><img src="https://img.shields.io/github/last-commit/AtenovD/orbit-chain-intelligence?style=for-the-badge" alt="Last commit"></a>
+</p>
+<p align="center">
+  <img src="https://img.shields.io/badge/python-3.11+-blue?style=for-the-badge&logo=python&logoColor=white" alt="Python 3.11+">
+  <img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI">
+  <img src="https://img.shields.io/badge/React-Vite-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React and Vite">
+  <img src="https://img.shields.io/badge/chain-Robinhood%20Chain-00C805?style=for-the-badge" alt="Robinhood Chain">
+  <img src="https://img.shields.io/badge/execution-paper%20only-brightgreen?style=for-the-badge" alt="Paper only">
+  <img src="https://img.shields.io/badge/agents-5%20core%20%C2%B7%20up%20to%2010-a855f7?style=for-the-badge" alt="Agents">
+  <img src="https://img.shields.io/badge/MCP-stdio%20%2B%20HTTP-EC4899?style=for-the-badge" alt="MCP">
+</p>
 
-![License](https://img.shields.io/badge/LICENSE-MIT-84cc16?style=for-the-badge)
-![Python](https://img.shields.io/badge/PYTHON-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FASTAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
-![React](https://img.shields.io/badge/REACT-VITE-61DAFB?style=for-the-badge&logo=react&logoColor=black)
-![Chain](https://img.shields.io/badge/CHAIN-ROBINHOOD_4663-00C805?style=for-the-badge)
-![Execution](https://img.shields.io/badge/EXECUTION-PAPER_ONLY-f59e0b?style=for-the-badge)
-![Agents](https://img.shields.io/badge/AGENTS-5_CORE_·_UP_TO_10-a855f7?style=for-the-badge)
-![MCP](https://img.shields.io/badge/MCP-STDIO_+_HTTP-ec4899?style=for-the-badge)
+<p align="center">
+  A live crew of five AI agents that reads on-chain data, meme narrative and risk on Robinhood Chain - then argues from evidence, not hype. No live orders, ever.
+</p>
 
-**A live crew of AI agents that reads on-chain data, meme narrative and risk — then argues from evidence, not hype.**
+<h3 align="center">Most AI trading demos ask a model for a vibe.<br>This one makes the model show its evidence - and lets only deterministic code promote a decision.</h3>
 
-</div>
+<table align="center">
+  <tr>
+    <td align="center"><img src="https://img.shields.io/badge/start-000000?style=for-the-badge&logo=python&logoColor=white" alt="start"></td>
+    <td align="center"><a href="#quick-start"><img src="https://img.shields.io/badge/QUICK%20START-run%20locally-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Quick start"></a></td>
+    <td align="center"><img src="https://img.shields.io/badge/self--host-000000?style=for-the-badge&logo=docker&logoColor=white" alt="self-host"></td>
+    <td align="center"><a href="#quick-start"><img src="https://img.shields.io/badge/DOCKER-compose%20up-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker deploy"></a></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="https://img.shields.io/badge/verdicts-000000?style=for-the-badge&logo=shield&logoColor=white" alt="verdicts"></td>
+    <td align="center"><a href="#how-a-verdict-is-made"><img src="https://img.shields.io/badge/PROTECTION-gate-84cc16?style=for-the-badge" alt="Protection gate"></a></td>
+    <td align="center"><img src="https://img.shields.io/badge/paper%20lab-000000?style=for-the-badge" alt="paper lab"></td>
+    <td align="center"><a href="#feature-map"><img src="https://img.shields.io/badge/PAPER-ledger%20%2B%20replay-f59e0b?style=for-the-badge" alt="Paper Lab"></a></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="https://img.shields.io/badge/models-000000?style=for-the-badge&logo=openai&logoColor=white" alt="models"></td>
+    <td align="center"><a href="#bring-your-own-model"><img src="https://img.shields.io/badge/BRING%20YOUR-OWN%20MODEL-a855f7?style=for-the-badge" alt="Bring your own model"></a></td>
+    <td align="center"><img src="https://img.shields.io/badge/tools-000000?style=for-the-badge&logo=fastapi&logoColor=white" alt="tools"></td>
+    <td align="center"><a href="#quick-start"><img src="https://img.shields.io/badge/API-%2Fdocs%20%C2%B7%20OpenAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="API docs"></a></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="https://img.shields.io/badge/research-000000?style=for-the-badge" alt="research"></td>
+    <td align="center"><a href="#feature-map"><img src="https://img.shields.io/badge/DEEP-RESEARCH-ec4899?style=for-the-badge" alt="Deep Research"></a></td>
+    <td align="center"><img src="https://img.shields.io/badge/memory-000000?style=for-the-badge" alt="memory"></td>
+    <td align="center"><a href="#feature-map"><img src="https://img.shields.io/badge/MEMORY-v2%20hybrid%20retrieval-0ea5e9?style=for-the-badge" alt="Memory v2"></a></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="https://img.shields.io/badge/new-000000?style=for-the-badge" alt="new"></td>
+    <td align="center"><a href="#feature-map"><img src="https://img.shields.io/badge/5%20AGENTS-sequential%20roundtable-D9364A?style=for-the-badge" alt="Agent crew"></a></td>
+    <td align="center"><img src="https://img.shields.io/badge/ops-000000?style=for-the-badge&logo=linux&logoColor=white" alt="ops"></td>
+    <td align="center"><a href="docs/DEPLOYMENT_RU.md"><img src="https://img.shields.io/badge/VPS-runbook%20%C2%B7%20backups-F7A41D?style=for-the-badge&logo=linux&logoColor=white" alt="VPS runbook"></a></td>
+  </tr>
+</table>
+
+<p align="center">
+  <img src="docs/screenshots/home.webp" alt="Orbit Signal Room" width="100%">
+</p>
 
 ---
 
@@ -28,10 +75,6 @@ Most "AI trading" demos hand a model a chart and ask for a vibe. Orbit is built 
 Five agents with distinct working styles debate a token in a live, interruptible conversation. Every contribution is a structured signal with evidence you can click through. A protection gate written in plain code — not a prompt — decides whether an `ENTER` survives. Everything ends in an immutable receipt and a paper-only ledger, so you can measure whether the crew is actually any good.
 
 **Orbit never places a real order. There is no execution engine, wallet or broker integration.**
-
-<br>
-
-<img src="docs/screenshots/home.webp" alt="Orbit Signal Room" width="100%">
 
 ## Feature map
 
