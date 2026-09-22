@@ -23,6 +23,12 @@ class Settings(BaseSettings):
     # Daily per-account spend gate. 0 disables a limit; owners are never gated.
     daily_research_limit: int = 10
     daily_message_limit: int = 100
+    # Visitors who open the site without signing in get an anonymous guest
+    # account with a smaller quota; linking a wallet lifts it to the limits above.
+    guest_access_enabled: bool = True
+    guest_daily_research_limit: int = 3
+    guest_daily_message_limit: int = 20
+    guest_max_per_ip_per_day: int = 20
     email_verification_required: bool = True
     email_verification_ttl_minutes: int = 60 * 24
     admin_emails: Annotated[list[str], NoDecode] = []

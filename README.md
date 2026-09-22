@@ -19,6 +19,8 @@
   <img src="https://img.shields.io/badge/execution-paper%20only-brightgreen?style=for-the-badge" alt="Paper only">
   <img src="https://img.shields.io/badge/agents-5%20core%20%C2%B7%20up%20to%2010-a855f7?style=for-the-badge" alt="Agents">
   <img src="https://img.shields.io/badge/MCP-stdio%20%2B%20HTTP-EC4899?style=for-the-badge" alt="MCP">
+  <img src="https://img.shields.io/badge/wallet-EIP--4361-F97316?style=for-the-badge" alt="EIP-4361 wallet sign-in">
+  <img src="https://img.shields.io/badge/access-guest%20%2B%20wallet-10B981?style=for-the-badge" alt="Guest and wallet access">
 </p>
 
 <p align="center">
@@ -177,7 +179,8 @@ Orbit never assumes what you pay or which model you use. Connect a key once and 
 
 - **Durable runtime** — database checkpoints, task attempts, pause/resume/cancel, crash recovery and multi-worker leases; live events over reconnectable SSE with replay.
 - **Workflow nodes** — agent, review, condition, parallel, human input, approval, MCP tool, artifact, final output. Standard and Constructive (explicit objections) modes.
-- **Accounts** — HttpOnly sessions, password recovery, workspaces with owner/admin/member/viewer roles, per-account daily quotas.
+- **Open access** — the site opens instantly with a guest account; connect a wallet (EIP-4361 Sign-In with Ethereum) for higher daily limits. No registration form required.
+- **Accounts** — HttpOnly sessions, password recovery, workspaces with owner/admin/member/viewer roles, per-account daily quotas, wallet-linked accounts with tiered guest/full limits.
 - **Materials** — TXT, Markdown, code, JSON, CSV, HTML, PDF and DOCX are checked, stored and extracted before a run starts.
 - **Interface** — RU/EN, responsive down to phones, local fonts, accessible dialogs.
 - **Ops** — Docker Compose + Caddy (automatic TLS), health endpoint, backup / restore / verify / off-site upload scripts.
@@ -241,6 +244,7 @@ src/orchestrator/    FastAPI application
   decision_contracts.py · protections.py · verdict.py
   paper_trading.py   paper ledger, replay, scorecards
   chain_tools.py     Robinhood Chain RPC tools
+  wallet_auth.py     EIP-4361 wallet sign-in, HMAC nonces
   providers.py       model connections and discovery
   memory.py · research.py · mcp.py · skill_catalog.py
 migrations/          Alembic revisions (PostgreSQL)

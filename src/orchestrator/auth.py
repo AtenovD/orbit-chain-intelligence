@@ -206,6 +206,9 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
             "/api/v1/auth/password-reset/confirm",
             "/api/v1/auth/email-verification/confirm",
             "/api/v1/auth/email-verification/request",
+            "/api/v1/auth/guest",
+            "/api/v1/auth/wallet/nonce",
+            "/api/v1/auth/wallet/verify",
         }
         if auth_route and not await consume_rate_limit(
             scope="auth", subject=f"{client_key}:{path}", limit=settings.auth_rate_limit_per_minute

@@ -234,11 +234,22 @@ class User(Base):
     enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     is_superuser: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     email_verified: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    is_guest: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    wallet_address: Mapped[str | None] = mapped_column(String(42), nullable=True, unique=True, index=True)
     twitter_user_id: Mapped[str | None] = mapped_column(String(80), nullable=True, unique=True, index=True)
     twitter_profile: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
     twitter_credentials: Mapped[str | None] = mapped_column(Text, nullable=True)
     last_seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class WalletNonce(Base):
+    """One-time sign-in nonces. A primary-key collision on insert means the signature is a replay."""
+
+    __tablename__ = "wallet_nonces"
+
+    nonce: Mapped[str] = mapped_column(String(128), primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
 
 
 class WorkspaceMember(Base):

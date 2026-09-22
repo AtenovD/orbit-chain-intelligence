@@ -6,6 +6,7 @@ import {
   useState,
   type CSSProperties,
   type Dispatch,
+  type ReactNode,
   type SetStateAction,
 } from "react";
 import { createPortal } from "react-dom";
@@ -78,9 +79,12 @@ import {
   BarChart3,
   type LucideIcon,
 } from "lucide-react";
+import { WalletDialog } from "./WalletDialog";
+import { openWalletDialog, shortAddress } from "./wallet";
 import {
   api,
   ApiRequestError,
+  type AdminOverview,
   type DeploymentCapabilities,
   setAuthenticationRequiredHandler,
   subscribeToRun,
@@ -118,6 +122,7 @@ import type {
   PaperTrade,
   DecisionQuality,
   Mode,
+  ResearchFinding,
   ResearchReport,
   Run,
   RunEvent,
@@ -151,6 +156,7 @@ type Screen =
   | "run"
   | "tasks"
   | "connections"
+  | "admin"
   | "settings"
   | "profile";
 type DraftMaterial = {
@@ -159,7 +165,7 @@ type DraftMaterial = {
   kind: string;
   file?: File;
 };
-type OrbitUser = { id: string; email: string; display_name: string; email_verified?: boolean; is_superuser?: boolean };
+type OrbitUser = { id: string; email: string; display_name: string; email_verified?: boolean; is_superuser?: boolean; is_guest?: boolean; wallet_address?: string | null };
 const AUTH_REQUIRED = import.meta.env.VITE_AUTH_REQUIRED === "true";
 const colors = ["#8ee06a", "#4fbf7a", "#2fc68c", "#c3e35a", "#6bd15c"];
 const AGENT_SKILLS = [
@@ -833,21 +839,87 @@ function initials(name: string) {
     .slice(0, 2);
 }
 function content(event: RunEvent) {
-  return String(
+  const supplied =
     event.payload.content ||
-      event.payload.description ||
-      event.payload.title ||
-      // Failure events carry their reason here; without it they render as the
-      // bare event name and tell the reader nothing.
-      event.payload.error ||
-      event.type,
+    event.payload.description ||
+    event.payload.title ||
+    // Failure events carry their reason here; without it they render as the
+    // bare event name and tell the reader nothing.
+    event.payload.error;
+  if (!supplied && event.type === "message.agent") {
+    return "";
+  }
+  return String(
+    supplied || event.type,
   );
 }
-function visibleMessageContent(event: RunEvent, speaker?: string) {
+function visibleMessageContent(event: RunEvent, speaker?: string, ru = false) {
   const value = content(event);
+  if (!value && event.type === "message.agent") {
+    return ru
+      ? "Ответ от агента не получен. Orbit отметил попытку как ошибку и не использовал её в результате."
+      : "The agent returned no readable response. Orbit marked the attempt as failed and did not use it in the result.";
+  }
   if (event.type !== "message.agent" || !speaker) return value;
   const escaped = speaker.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   return value.replace(new RegExp(`^\\s*\\[${escaped}\\]\\s*`, "i"), "");
+}
+
+function inlineMessage(text: string): ReactNode[] {
+  return text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g).filter(Boolean).map((part, index) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return <strong key={index}>{part.slice(2, -2)}</strong>;
+    }
+    if (part.startsWith("`") && part.endsWith("`")) {
+      return <code key={index}>{part.slice(1, -1)}</code>;
+    }
+    return <span key={index}>{part}</span>;
+  });
+}
+
+function StructuredMessage({ value }: { value: string }) {
+  const lines = value.replace(/\r\n?/g, "\n").split("\n");
+  const blocks: ReactNode[] = [];
+  let paragraph: string[] = [];
+  let items: Array<{ text: string; ordered: boolean }> = [];
+  const flushParagraph = () => {
+    if (paragraph.length) {
+      blocks.push(<p key={`p-${blocks.length}`}>{inlineMessage(paragraph.join(" "))}</p>);
+      paragraph = [];
+    }
+  };
+  const flushItems = () => {
+    if (!items.length) return;
+    const ordered = items[0].ordered;
+    const Tag = ordered ? "ol" : "ul";
+    blocks.push(<Tag className="message-list" key={`l-${blocks.length}`}>{items.map((item, index) => <li key={index}>{inlineMessage(item.text)}</li>)}</Tag>);
+    items = [];
+  };
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (!line) {
+      flushParagraph();
+      flushItems();
+      continue;
+    }
+    const heading = line.match(/^#{1,3}\s+(.+)$/);
+    const bullet = line.match(/^(?:[-*•])\s+(.+)$/);
+    const ordered = line.match(/^\d+[.)]\s+(.+)$/);
+    if (heading) {
+      flushParagraph(); flushItems();
+      blocks.push(<h4 key={`h-${blocks.length}`}>{inlineMessage(heading[1])}</h4>);
+    } else if (bullet || ordered) {
+      flushParagraph();
+      const isOrdered = Boolean(ordered);
+      if (items.length && items[0].ordered !== isOrdered) flushItems();
+      items.push({ text: (bullet || ordered)![1], ordered: isOrdered });
+    } else {
+      flushItems();
+      paragraph.push(line);
+    }
+  }
+  flushParagraph(); flushItems();
+  return <div className="messagecontent">{blocks}</div>;
 }
 function time(value: string, language: "ru" | "en" = "ru") {
   return new Date(value).toLocaleTimeString(
@@ -903,6 +975,7 @@ type ContextConnectorPreset = {
   credentialRequired?: boolean;
   identifierLabel?: string;
   identifierPlaceholder?: string;
+  identifierRequired?: boolean;
   helpUrl?: string;
 };
 const CONTEXT_CONNECTORS: ContextConnectorPreset[] = [
@@ -951,8 +1024,9 @@ const CONTEXT_CONNECTORS: ContextConnectorPreset[] = [
     color: "#f4a33d",
     oauth: false,
     credentialLabel: "Bitquery API key",
-    identifierLabel: "Токен или кошелёк EVM",
+    identifierLabel: "Адрес токена или кошелька EVM (необязательно)",
     identifierPlaceholder: "token:0x…  или  wallet:0x…",
+    identifierRequired: false,
     helpUrl: "https://ide.bitquery.io/",
     descriptionRu:
       "DEX-сделки токена или балансы кошелька из прямого Bitquery GraphQL API.",
@@ -994,6 +1068,7 @@ export default function App() {
         "connections",
         "tokens",
         "skills",
+        "admin",
         "settings",
         "profile",
       ] as Screen[]
@@ -1002,6 +1077,10 @@ export default function App() {
       : "home";
   });
   const [navOpen, setNavOpen] = useState(true);
+  const [homeNavigation, setHomeNavigation] = useState<{
+    target: "top" | "composer";
+    nonce: number;
+  }>({ target: "top", nonce: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [workspace, setWorkspace] = useState<Workspace | null>(null);
@@ -1054,6 +1133,11 @@ export default function App() {
     localStorage.setItem("orbit-appearance", JSON.stringify(appearance));
   }, [appearance]);
 
+  const navigateHome = (target: "top" | "composer") => {
+    setScreen("home");
+    setHomeNavigation((current) => ({ target, nonce: current.nonce + 1 }));
+  };
+
   useEffect(() => {
     const token = new URLSearchParams(location.search).get("verify_email_token");
     if (!token) return;
@@ -1069,15 +1153,30 @@ export default function App() {
 
   useEffect(() => {
     if (!AUTH_REQUIRED || !authChecking) return;
+    // The site opens straight onto the app. Visitors without a session get an
+    // anonymous guest account; the email form stays reachable at ?signin=1 for
+    // existing accounts and is the fallback if guest access is switched off.
+    const wantsSignIn = new URLSearchParams(location.search).has("signin");
     api
       .me()
       .then((value) => {
+        if (wantsSignIn && value.is_guest) throw new Error("sign-in requested");
         setUser(value);
         setAuthenticated(true);
       })
-      .catch(() => {
+      .catch(async () => {
         localStorage.removeItem("orbit-auth-token");
-        setAuthenticated(false);
+        if (wantsSignIn) {
+          setAuthenticated(false);
+          return;
+        }
+        try {
+          await api.guest();
+          setUser(await api.me());
+          setAuthenticated(true);
+        } catch {
+          setAuthenticated(false);
+        }
       })
       .finally(() => {
         setAuthChecking(false);
@@ -1089,8 +1188,8 @@ export default function App() {
       setAuthenticationRequiredHandler(() => {
         localStorage.removeItem("orbit-auth-token");
         setAuthenticated(false);
-        setAuthChecking(false);
-        setLoading(false);
+        setAuthChecking(true);
+        setLoading(true);
         setError("");
         setWorkspace(null);
         setAgents([]);
@@ -1161,14 +1260,16 @@ export default function App() {
       .then((items) => {
         if (cancelled) return;
         setSetupConnections(items);
-        if (!localStorage.getItem("orbit-signal-onboarding-v1"))
+        // Guests land straight on the app; a blocking first-run dialog would
+        // undo that, so only signed-in accounts get it automatically.
+        if (!user.is_guest && !localStorage.getItem("orbit-signal-onboarding-v1"))
           setOnboardingOpen(true);
       })
       .catch(() => undefined);
     return () => {
       cancelled = true;
     };
-  }, [workspace, authenticated]);
+  }, [workspace, authenticated, user.is_guest]);
 
   const refreshRun = useCallback(async (id: string) => {
     const [r, e, t, a, f] = await Promise.all([
@@ -1353,6 +1454,7 @@ export default function App() {
         open={navOpen}
         screen={screen}
         go={setScreen}
+        goHome={navigateHome}
         toggle={() => setNavOpen((v) => !v)}
         history={history}
         openRun={openRun}
@@ -1408,6 +1510,9 @@ export default function App() {
             language={appearance.language}
             initialDraft={forkDraft}
             onDraftConsumed={() => setForkDraft(null)}
+            navigation={homeNavigation}
+            goProfile={() => setScreen("profile")}
+            walletAddress={user.wallet_address || null}
           />
         )}
         {screen === "workflows" && (
@@ -1547,6 +1652,9 @@ export default function App() {
             language={appearance.language}
           />
         )}
+        {screen === "admin" && user.is_superuser && (
+          <AdminDashboard language={appearance.language} setError={setError} />
+        )}
         {screen === "settings" && (
           <AppearanceSettingsPage value={appearance} set={setAppearance} />
         )}
@@ -1560,10 +1668,12 @@ export default function App() {
             onSignedOut={() => {
               localStorage.removeItem("orbit-auth-token");
               setAuthenticated(false);
+              setAuthChecking(true);
             }}
           />
         )}
       </main>
+      <WalletDialog language={appearance.language} onConnected={() => window.location.reload()} />
       {onboardingOpen && (
         <LaunchChecklist
           agents={agents}
@@ -1581,6 +1691,87 @@ export default function App() {
       )}
     </div>
   );
+}
+
+function AdminDashboard({ language, setError }: { language: "ru" | "en"; setError: (value: string) => void }) {
+  const ru = language === "ru";
+  const [data, setData] = useState<AdminOverview | null>(null);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    api.adminOverview().then(setData).catch((error) => setError((error as Error).message)).finally(() => setLoading(false));
+  }, [setError]);
+  if (loading) return <div className="adminpage page"><p className="eyebrow">ADMIN // LOADING SIGNALS</p></div>;
+  if (!data) return null;
+  const { summary } = data;
+  const max = Math.max(1, ...data.timeline.flatMap((item) => [item.registrations, item.active]));
+  const cost = (micros: number) => `$${(micros / 1_000_000).toFixed(2)}`;
+  const formatDay = (day: string) => new Intl.DateTimeFormat(ru ? "ru-RU" : "en-GB", {
+    day: "numeric", month: "short", timeZone: "UTC",
+  }).format(new Date(`${day}T00:00:00Z`));
+  const traffic: Array<{ value: string; label: string; delta: number | null; unit: string; lowerIsBetter?: boolean }> = [
+    { value: summary.visitors_7.toLocaleString(), label: ru ? "уникальных браузеров / 7д" : "unique browsers / 7d", delta: summary.visitors_delta, unit: "%" },
+    { value: summary.requests_7.toLocaleString(), label: ru ? "запросов / 7д" : "requests / 7d", delta: summary.requests_delta, unit: "%" },
+    { value: `${summary.bounce_rate_7}%`, label: ru ? "визитов с 1 запросом / 7д" : "one-request visits / 7d", delta: summary.bounce_delta, unit: "pp", lowerIsBetter: true },
+  ];
+  async function toggleUser(id: string, enabled: boolean) {
+    try {
+      await api.updateAdminUser(id, !enabled);
+      setData(await api.adminOverview());
+    } catch (error) { setError((error as Error).message); }
+  }
+  return <div className="adminpage page">
+    <header className="adminhero">
+      <div><p className="eyebrow">OWNER CONSOLE · PRIVATE</p><h1>{ru ? "Пульс Orbit" : "Orbit pulse"}</h1><p>{ru ? "Регистрации, активность, расходы и надёжность платформы — без внешних трекеров." : "Registrations, activity, cost, and platform reliability — without third-party trackers."}</p></div>
+      <span className="adminlive"><i /> {summary.live_sessions} {ru ? "в сети" : "live sessions"}</span>
+    </header>
+    <section className="adminkpis">
+      {[
+        [summary.total_users, ru ? "пользователей" : "users", `+${summary.registrations_7} / 7d`],
+        [summary.dau, ru ? "активны за 24ч" : "active / 24h", `${summary.activation_users} ${ru ? "подключили модель" : "connected model"}`],
+        [summary.runs_today, ru ? "прогонов сегодня" : "runs today", `${summary.failure_rate * 100}% ${ru ? "ошибок" : "failed"}`],
+        [cost(summary.spend_month_micros), ru ? "затрачено / 30д" : "spent / 30d", `${summary.total_runs} ${ru ? "всего прогонов" : "total runs"}`],
+      ].map(([value, label, note]) => <article key={String(label)}><strong>{value}</strong><span>{label}</span><small>{note}</small></article>)}
+    </section>
+    <section className="adminkpis admintraffic">
+      {traffic.map((item) => <article key={item.label}>
+        <strong>{item.value}</strong>
+        <span>{item.label}</span>
+        {item.delta === null
+          ? <small>{ru ? "не с чем сравнить" : "no prior period"}</small>
+          : <em className={(item.lowerIsBetter ? item.delta <= 0 : item.delta >= 0) ? "kpiup" : "kpidown"}>{item.delta > 0 ? "+" : ""}{item.delta}{item.unit}</em>}
+      </article>)}
+    </section>
+    <p className="admintrafficnote">{ru
+      ? "Уникальный браузер — приватный технический идентификатор, а не подтверждённый человек или аккаунт."
+      : "A unique browser is a privacy-safe technical identifier, not a confirmed person or account."}</p>
+    <section className="adminpanel adminchart">
+      <header>
+        <div>
+          <p className="eyebrow">30 DAY ACTIVITY</p>
+          <h2>{ru ? "Регистрации и уникальные браузеры" : "Registrations & unique browsers"}</h2>
+        </div>
+        <span>{summary.registrations_30} {ru ? "регистраций за 30д" : "registrations / 30d"}</span>
+      </header>
+      <div className="adminbars" aria-label={ru ? "График регистраций и уникальных браузеров" : "Registrations and unique browsers chart"}>
+        {data.timeline.map((item) => <div className="adminbar" key={item.day} title={`${formatDay(item.day)}: ${item.registrations} ${ru ? "регистраций" : "registrations"}, ${item.active} ${ru ? "браузеров" : "browsers"}`}>
+          <i style={{ height: `${Math.max(3, item.registrations / max * 100)}%` }} />
+          <b style={{ height: `${Math.max(3, item.active / max * 100)}%` }} />
+        </div>)}
+      </div>
+      <div className="adminchartreadout" aria-label={ru ? "Значения за последние семь дней" : "Values for the last seven days"}>
+        {data.timeline.slice(-7).map((item) => <div key={item.day}>
+          <span>{formatDay(item.day)}</span>
+          <b>{item.registrations} <small>{ru ? "рег." : "reg."}</small></b>
+          <strong>{item.active} <small>{ru ? "браузеров" : "browsers"}</small></strong>
+        </div>)}
+      </div>
+      <footer><span>{ru ? "фиолетовый · регистрации" : "violet · registrations"}</span><span>{ru ? "зелёный · уникальные браузеры" : "green · unique browsers"}</span></footer>
+    </section>
+    <div className="admingrid">
+      <section className="adminpanel adminusers"><header><div><p className="eyebrow">USERS</p><h2>{ru ? "Пользователи" : "Users"}</h2></div><span>{ru ? "До 200 последних" : "Latest 200"}</span></header><div className="admintable"><div className="adminrow adminhead"><span>{ru ? "Аккаунт" : "Account"}</span><span>{ru ? "Активность" : "Activity"}</span><span>{ru ? "Прогоны / траты" : "Runs / spend"}</span><span>{ru ? "Доступ" : "Access"}</span></div>{data.users.map((item) => <div className="adminrow" key={item.id}><span><b>{item.display_name}</b><small>{item.email}</small></span><span><small>{item.last_seen_at ? new Date(item.last_seen_at).toLocaleDateString() : "—"}</small><em className={item.email_verified ? "verified" : "unverified"}>{item.email_verified ? (ru ? "подтверждён" : "verified") : (ru ? "не подтверждён" : "unverified")}</em></span><span><b>{item.runs}</b><small>{cost(item.cost_micros)}</small></span><button disabled={item.is_superuser} onClick={() => void toggleUser(item.id, item.enabled)} className={item.enabled ? "accesson" : "accessoff"}>{item.enabled ? (ru ? "активен" : "enabled") : (ru ? "заблокирован" : "disabled")}</button></div>)}</div></section>
+      <section className="adminpanel adminruns"><header><div><p className="eyebrow">RUNTIME FEED</p><h2>{ru ? "Последние прогоны" : "Recent runs"}</h2></div></header>{data.recent_runs.length ? data.recent_runs.map((item) => <article key={item.id}><i className={item.status} /><div><b>{item.goal}</b><small>{item.owner_email || "—"} · {new Date(item.created_at).toLocaleString()}</small></div><span>{cost(item.cost_micros)}</span></article>) : <p>{ru ? "Прогонов пока нет." : "No runs yet."}</p>}<div className="adminverdicts"><p className="eyebrow">TOKEN VERDICTS</p>{Object.entries(data.verdict_distribution).length ? Object.entries(data.verdict_distribution).map(([key, count]) => <span key={key}>{key} <b>{count}</b></span>) : <small>{ru ? "Пока нет вердиктов" : "No verdicts yet"}</small>}</div></section>
+    </div>
+  </div>;
 }
 
 function hexToRgb(hex: string): string {
@@ -1610,6 +1801,32 @@ const AUTH_HEADLINE_RU: HeadlineLine[] = [
   { text: "Читай рынок", color: "#f0f7e8" },
   { text: "раньше толпы.", color: "#c8ff61", italic: true },
 ];
+
+const HOME_HEADLINE_EN: HeadlineLine[] = [
+  { text: "Check the", color: "#f4f7ed" },
+  { text: "token", color: "#f4f7ed" },
+  { text: "before", color: "#c8ff61", italic: true },
+  { text: "you trade it.", color: "#f4f7ed" },
+];
+const HOME_HEADLINE_RU: HeadlineLine[] = [
+  { text: "Проверьте", color: "#f4f7ed" },
+  { text: "токен", color: "#f4f7ed" },
+  { text: "до того,", color: "#c8ff61", italic: true },
+  { text: "как торговать.", color: "#f4f7ed" },
+];
+
+/** Page titles use the particle effect on wide screens; narrow screens keep plain, wrapping text. */
+function PageTitle({ text, accent }: { text: string; accent?: string }) {
+  const [wide, setWide] = useState(() => window.matchMedia("(min-width: 900px)").matches);
+  useEffect(() => {
+    const query = window.matchMedia("(min-width: 900px)");
+    const update = () => setWide(query.matches);
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+  const lines = useMemo<HeadlineLine[]>(() => [{ text, color: accent || "#f4f7ed" }], [text, accent]);
+  return wide ? <ParticleHeadline lines={lines} /> : <h1>{text}</h1>;
+}
 
 function ParticleHeadline({
   lines,
@@ -1641,6 +1858,8 @@ function ParticleHeadline({
       const width = probe!.clientWidth;
       const lineHeight = parseFloat(style.lineHeight) || parseFloat(style.fontSize) * 1.1;
       const height = Math.ceil(lineHeight * lines.length);
+      // A hidden or not-yet-laid-out heading has no size to sample from.
+      if (!(width > 0) || !(height > 0)) return [];
       canvas!.width = Math.max(1, Math.round(width * dpr));
       canvas!.height = Math.max(1, Math.round(height * dpr));
       canvas!.style.height = `${height}px`;
@@ -1655,11 +1874,13 @@ function ParticleHeadline({
       octx.textAlign = "left";
       octx.textBaseline = "middle";
       const letterSpacing = parseFloat(style.letterSpacing);
+      const centred = style.textAlign === "center";
       lines.forEach((line, index) => {
         octx.font = `${line.italic ? "italic " : ""}400 ${style.fontSize} ${style.fontFamily}`;
         if ("letterSpacing" in octx) (octx as unknown as { letterSpacing: string }).letterSpacing = Number.isNaN(letterSpacing) ? "0px" : `${letterSpacing}px`;
         octx.fillStyle = "#fff";
-        octx.fillText(line.text, 0, lineHeight * index + lineHeight / 2);
+        const startX = centred ? Math.max(0, (width - octx.measureText(line.text).width) / 2) : 0;
+        octx.fillText(line.text, startX, lineHeight * index + lineHeight / 2);
       });
 
       const image = octx.getImageData(0, 0, off.width, off.height).data;
@@ -1703,6 +1924,8 @@ function ParticleHeadline({
       });
     }
     layout(true);
+    let disposed = false;
+    void document.fonts?.ready.then(() => { if (!disposed) layout(false); });
 
     function onMove(event: PointerEvent) {
       const rect = canvas!.getBoundingClientRect();
@@ -1754,6 +1977,7 @@ function ParticleHeadline({
     });
     resize.observe(probe);
     return () => {
+      disposed = true;
       cancelAnimationFrame(raf);
       resize.disconnect();
       canvas.removeEventListener("pointermove", onMove);
@@ -2079,6 +2303,7 @@ function Nav({
   open,
   screen,
   go,
+  goHome,
   toggle,
   history,
   openRun,
@@ -2091,6 +2316,7 @@ function Nav({
   open: boolean;
   screen: Screen;
   go: (s: Screen) => void;
+  goHome: (target: "top" | "composer") => void;
   toggle: () => void;
   history: Run[];
   openRun: (r: Run) => void;
@@ -2152,6 +2378,7 @@ function Nav({
       <Plug />,
     ],
     ["settings", language === "ru" ? "Настройки" : "Settings", <Settings />],
+    ...(user.is_superuser ? [["admin", language === "ru" ? "Админ" : "Admin", <BarChart3 />] as [Screen, string, React.ReactNode]] : []),
     ["profile", language === "ru" ? "Профиль" : "Profile", <AtSign />],
   ];
   function renameDialogue(value: Run) {
@@ -2186,8 +2413,15 @@ function Nav({
         onClick={() => setContextMenu(null)}
       >
         <div className="logo">
-          <OrbitMark />
-          {open && <b>Orbit</b>}
+          <button
+            className="logohome"
+            onClick={() => goHome("top")}
+            aria-label={language === "ru" ? "В начало Orbit" : "Go to Orbit home"}
+            title={language === "ru" ? "В начало" : "Back to top"}
+          >
+            <OrbitMark />
+            {open && <b>Orbit</b>}
+          </button>
           {open && (
             <button
               className="notificationbutton"
@@ -2255,7 +2489,8 @@ function Nav({
               <button
                 className={screen === key ? "active" : ""}
                 onClick={() => {
-                  go(key);
+                  if (key === "home") goHome("composer");
+                  else go(key);
                   if (key === "workflows") setExpanded((v) => !v);
                 }}
               >
@@ -2532,6 +2767,9 @@ function NewChat({
   language,
   initialDraft,
   onDraftConsumed,
+  navigation,
+  goProfile,
+  walletAddress,
 }: {
   agents: Agent[];
   history: Run[];
@@ -2544,6 +2782,9 @@ function NewChat({
   language: "ru" | "en";
   initialDraft: { goal: string; agentIds: string[] } | null;
   onDraftConsumed: () => void;
+  navigation: { target: "top" | "composer"; nonce: number };
+  goProfile: () => void;
+  walletAddress: string | null;
 }) {
   const [value, setValue] = useState("");
   const [materials, setMaterials] = useState<DraftMaterial[]>([]);
@@ -2558,6 +2799,8 @@ function NewChat({
   }>({ reports: [], tokens: [], verdicts: [] });
   const workspaceId = workspace?.id;
   const selectedTeamSeeded = useRef(false);
+  const homeTopRef = useRef<HTMLDivElement>(null);
+  const composerRef = useRef<HTMLDivElement>(null);
   const ru = language === "ru";
   const coreAgents = agents.slice(0, 5);
   const selectedCoreAgents = coreAgents.filter((agent) => selectedAgents.has(agent.id));
@@ -2613,6 +2856,35 @@ function NewChat({
     setSelectedAgents(new Set(initialDraft.agentIds));
     onDraftConsumed();
   }, [initialDraft, onDraftConsumed]);
+  const scrollHome = (target: "top" | "composer", behavior: ScrollBehavior = "smooth") => {
+    const element = target === "composer" ? composerRef.current : homeTopRef.current;
+    if (!element) return;
+    const scrollContainer = element.closest<HTMLElement>(".main");
+    if (!scrollContainer) {
+      element.scrollIntoView({ behavior, block: target === "composer" ? "center" : "start" });
+      return;
+    }
+    if (target === "top") {
+      scrollContainer.scrollTo({ top: 0, behavior });
+      return;
+    }
+    // Keep the whole composer in view. `scrollIntoView({ block: "start" })`
+    // can put its top behind the viewport when the page has nested scrolling.
+    const composerTop = scrollContainer.scrollTop
+      + element.getBoundingClientRect().top
+      - scrollContainer.getBoundingClientRect().top;
+    const safeTop = Math.max(
+      24,
+      composerTop - Math.max(24, (scrollContainer.clientHeight - element.clientHeight) / 2),
+    );
+    scrollContainer.scrollTo({ top: safeTop, behavior });
+  };
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      scrollHome(navigation.target, navigation.nonce ? "smooth" : "auto");
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [navigation]);
   function submit() {
     if (value.trim() && selectedAgents.size)
       onStart(value.trim(), materials, [...selectedAgents]);
@@ -2654,7 +2926,7 @@ function NewChat({
     void addFiles(event.dataTransfer.files);
   }
   return (
-    <div className="newchat signal-deck">
+    <div className="newchat signal-deck" ref={homeTopRef}>
       <div className="signal-deck-noise" aria-hidden="true" />
       <div className="signal-deck-grid" aria-hidden="true" />
       <div className="signal-deck-shell">
@@ -2669,9 +2941,7 @@ function NewChat({
         <section className="signal-deck-hero">
           <div className="signal-deck-copy">
             <p className="signal-kicker"><i /> {ru ? "СИГНАЛЬНАЯ КОМНАТА" : "SIGNAL ROOM"}</p>
-            <h1>
-              {ru ? <>Проверьте токен <em>до</em> того, как торговать.</> : <>Check the token <em>before</em> you trade it.</>}
-            </h1>
+            <ParticleHeadline lines={ru ? HOME_HEADLINE_RU : HOME_HEADLINE_EN} />
             <p className="signal-lede">
               {ru
                 ? "Вставьте адрес контракта. Пять агентов проверят холдеров, ликвидность и права владельца в Robinhood Chain и вернут ENTER, WATCH или SKIP со ссылками на доказательства."
@@ -2688,6 +2958,30 @@ function NewChat({
             <div className="signal-scout-callout signal-scout-callout-left"><small>01</small><b>{ru ? "Читает сеть" : "Reads the chain"}</b><span>{ru ? "холдеры и пулы" : "holders and pools"}</span></div>
             <div className="signal-scout-callout signal-scout-callout-right"><small>02</small><b>{ru ? "Показывает источники" : "Shows its sources"}</b><span>{ru ? "у каждого вывода есть ссылка" : "every claim links to evidence"}</span></div>
           </div>
+          <aside className="signal-launch-rail">
+            <div className="signal-promo-slot">
+              <span>{ru ? "СТАРТОВЫЙ ОФФЕР" : "LAUNCH OFFER"}</span>
+              <b>{ru ? "7 дней расширенного доступа к анализу" : "7 days of extended analysis access"}</b>
+              <p>{ru ? "Место для проверенного промо: тестовых кредитов, бесплатной модели или доступа к on-chain анализу." : "A reserved space for a verified promotion: trial credits, a free model, or on-chain analysis access."}</p>
+              <button onClick={() => scrollHome("composer")}>
+                {ru ? "Создать первый чат" : "Create your first chat"} <ChevronDown />
+              </button>
+            </div>
+            <a className="signal-rail-action signal-github-action" href="https://github.com/AtenovD/orbit-chain-intelligence" target="_blank" rel="noreferrer">
+              <Github />
+              <span><b>GitHub</b><small>{ru ? "Open-source версия Orbit" : "Open-source edition of Orbit"}</small></span>
+              <ChevronRight />
+            </a>
+            <button className="signal-rail-action" onClick={goProfile}><Megaphone /> {ru ? "Амбассадорская кампания" : "Ambassador campaign"}<ChevronRight /></button>
+            <button className="signal-rail-action signal-wallet-action" onClick={walletAddress ? goProfile : openWalletDialog}>
+              <Wallet />
+              <span>
+                <b>{walletAddress ? shortAddress(walletAddress) : ru ? "Подключить кошелёк" : "Connect wallet"}</b>
+                <small>{walletAddress ? (ru ? "Повышенный лимит включён" : "Higher usage limit active") : ru ? "Получите повышенный лимит использования" : "Get a higher usage limit"}</small>
+              </span>
+              <ChevronRight />
+            </button>
+          </aside>
           <aside className="signal-market-card">
             <header><span>{ru ? "АНАЛИТИКА РАБОЧЕЙ КОМНАТЫ" : "ROOM ANALYTICS"}</span><i>{history.length ? "LIVE DATA" : "EMPTY"}</i></header>
             <div className="signal-price"><b>{history.length ? `${completionRate}%` : "—"}</b><span>{ru ? "доля завершённых запусков" : "completed run rate"}</span></div>
@@ -2746,6 +3040,7 @@ function NewChat({
           <div className="signal-crew-foot"><span><Users /> {ru ? `${selectedCoreAgents.length} из 5 базовых выбраны. Состав можно менять и после старта.` : `${selectedCoreAgents.length} of 5 core agents selected. The roster stays editable after launch.`}</span>{selectedAgents.size > 0 && <em className={connectedSelectedAgents.length === selectedAgents.size ? "ready" : ""}>{connectedSelectedAgents.length === selectedAgents.size ? (ru ? "Все выбранные агенты подключены к моделям" : "Every selected agent has a live model") : (ru ? `${connectedSelectedAgents.length}/${selectedAgents.size} выбрано с подключённой моделью` : `${connectedSelectedAgents.length}/${selectedAgents.size} selected with a live model`)}</em>}{agents.length > 5 && <button onClick={() => setPickerOpen(true)}>+{agents.length - 5} {ru ? "специалистов" : "specialists"}</button>}</div>
         </section>
         <div
+          ref={composerRef}
           className={`startcomposer ${dragActive ? "drag-active" : ""}`}
           onDragEnter={(event) => {
             event.preventDefault();
@@ -2762,7 +3057,6 @@ function NewChat({
           onDrop={dropFiles}
         >
           <textarea
-            autoFocus
             value={value}
             onChange={(e) => setValue(e.target.value)}
             placeholder={
@@ -3136,8 +3430,15 @@ function LaunchChecklist({
 }) {
   const ru = language === "ru";
   const modelReady = agents.some((agent) => Boolean(agent.connection_id));
-  const bitqueryReady = connections.some((connection) => connection.provider === "bitquery");
-  const blockscoutReady = connections.some((connection) => connection.provider === "blockscout");
+  // Context connectors are persisted by the API with the `connector-` prefix.
+  // Keep the unprefixed form for workspaces created by older builds.
+  const contextConnectorReady = (connector: string) =>
+    connections.some(
+      (connection) =>
+        connection.provider === `connector-${connector}` || connection.provider === connector,
+    );
+  const bitqueryReady = contextConnectorReady("bitquery");
+  const blockscoutReady = contextConnectorReady("blockscout");
   const steps = [
     {
       icon: Brain,
@@ -3508,6 +3809,30 @@ function DeepResearch({
     const responsiveSources = Object.values(current.source_status).filter((item) => item.results > 0).length;
     return { sourceCounts, averageScore, enabledSources, responsiveSources };
   }, [current]);
+  const researchReadout = useMemo(() => {
+    if (!current || !researchMetrics) return null;
+    const directFindings = current.findings.filter((item) => item.source === "onchain");
+    const directSuccesses = directFindings.filter(
+      (item) => (item as ResearchFinding & { provenance?: { status?: string } }).provenance?.status !== "error",
+    );
+    const failedDirectChecks = directFindings.length - directSuccesses.length;
+    const publicFindings = current.findings.length - directFindings.length;
+    const hasAddress = /0x[a-fA-F0-9]{40}/.test(current.query);
+    const firstDirect = directSuccesses[0];
+    const conclusion = firstDirect
+      ? firstDirect.snippet
+      : ru
+        ? "В выбранных источниках не нашлось прямого проверяемого наблюдения."
+        : "No direct, verifiable observation was returned by the selected sources.";
+    const scope = hasAddress
+      ? ru
+        ? "Проверка адреса и связанных с ним публичных сигналов"
+        : "Address review and related public signals"
+      : ru
+        ? "Исследование запроса по выбранным источникам"
+        : "Research across the selected sources";
+    return { directSuccesses, failedDirectChecks, publicFindings, conclusion, scope };
+  }, [current, researchMetrics, ru]);
   const researchSteps = [
     {
       icon: Compass,
@@ -3558,9 +3883,7 @@ function DeepResearch({
         <header>
           <div>
             <p className="eyebrow">MULTI-SOURCE INTELLIGENCE</p>
-            <h1>
-              {ru ? "Исследуйте тему глубже" : "Explore a topic in depth"}
-            </h1>
+            <PageTitle text={ru ? "Исследуйте тему глубже" : "Explore a topic in depth"} />
             <p>
               {ru
                 ? "Веб, социальные платформы и проверяемые on-chain данные в одном отчёте."
@@ -3705,18 +4028,38 @@ function DeepResearch({
             </header>
             {researchMetrics && (
               <div className="researchmetrics">
-                <article><small>{ru ? "ДОКАЗАТЕЛЬСТВА" : "EVIDENCE"}</small><b>{current.findings.length}</b><span>{ru ? "найденных материалов" : "findings collected"}</span></article>
-                <article><small>{ru ? "ПОКРЫТИЕ" : "COVERAGE"}</small><b>{researchMetrics.responsiveSources}/{researchMetrics.enabledSources}</b><span>{ru ? "источников дали результат" : "sources returned results"}</span></article>
-                <article><small>{ru ? "РЕЛЕВАНТНОСТЬ" : "RELEVANCE"}</small><b>{researchMetrics.averageScore}%</b><span>{ru ? "средний сигнал" : "average signal"}</span></article>
+                <article><small>{ru ? "МАТЕРИАЛЫ" : "MATERIALS"}</small><b>{current.findings.length}</b><span>{ru ? "отдельных наблюдений" : "separate observations"}</span></article>
+                <article><small>{ru ? "ПОКРЫТИЕ" : "COVERAGE"}</small><b>{researchMetrics.responsiveSources}/{researchMetrics.enabledSources}</b><span>{ru ? "выбранных источников ответили" : "selected sources returned data"}</span></article>
+                <article><small>{ru ? "СОВПАДЕНИЕ С ЗАПРОСОМ" : "QUERY MATCH"}</small><b>{researchMetrics.averageScore}%</b><span>{ru ? "оценка совпадения, не достоверность" : "match estimate, not truth"}</span></article>
                 <article className="researchattribution"><small>{ru ? "РАСПРЕДЕЛЕНИЕ ИСТОЧНИКОВ" : "SOURCE MIX"}</small><div>{Object.entries(researchMetrics.sourceCounts).map(([source, count]) => <span key={source} style={{ width: `${Math.max(8, (count / Math.max(current.findings.length, 1)) * 100)}%` }} title={`${sourceLabel(source)} · ${count}`}>{sourceLabel(source)} <b>{count}</b></span>)}</div></article>
               </div>
             )}
+            {researchReadout && <section className="researchreadout" aria-label={ru ? "Итог исследования" : "Research conclusion"}>
+              <div className="researchverdict">
+                <span className="researchsectionlabel"><Fingerprint /> {ru ? "ВЫВОД НА ОСНОВЕ ДАННЫХ" : "EVIDENCE-BASED READOUT"}</span>
+                <h3>{researchReadout.scope}</h3>
+                <p>{researchReadout.conclusion}</p>
+                <small>{ru ? "Это исследовательский вывод, а не финансовая рекомендация. Откройте первоисточник перед важным решением." : "This is a research readout, not financial advice. Open the primary source before a consequential decision."}</small>
+              </div>
+              <div className="researchfacts">
+                <article><b>{researchReadout.directSuccesses.length}</b><span>{ru ? "прямых on-chain наблюдений" : "direct on-chain observations"}</span></article>
+                <article><b>{researchReadout.publicFindings}</b><span>{ru ? "публичных результатов для проверки" : "public results to verify"}</span></article>
+                <article className={researchReadout.failedDirectChecks ? "warning" : ""}><b>{researchReadout.failedDirectChecks || "—"}</b><span>{researchReadout.failedDirectChecks ? (ru ? "прямых проверок не ответили" : "direct checks did not respond") : (ru ? "пропусков прямой проверки нет" : "no direct checks were missed")}</span></article>
+              </div>
+            </section>}
             <div className="researchbody">
               <article className="reportdocument">
-                <pre>{current.report}</pre>
+                <header><div><p className="eyebrow">{ru ? "КЛЮЧЕВЫЕ НАБЛЮДЕНИЯ" : "KEY OBSERVATIONS"}</p><h3>{ru ? "Что именно было найдено" : "What was found"}</h3></div><span>{ru ? "Каждый пункт ведёт к источнику справа" : "Every item links to a source at right"}</span></header>
+                <div className="findingledger">
+                  {current.findings.slice(0, 8).map((item, index) => <article key={`${item.url}-${index}`}>
+                    <span>{String(index + 1).padStart(2, "0")}</span>
+                    <div><div className="findingmeta"><b>{sourceLabel(item.source)}</b><small>{Math.round(item.score * 100)}% {ru ? "совпадение с запросом" : "query match"}</small></div><h4>{item.title}</h4><p>{item.snippet || (ru ? "Источник не отдал описание; откройте страницу для проверки." : "The source returned no description; open it to verify.")}</p></div>
+                  </article>)}
+                </div>
+                <details className="researchraw"><summary>{ru ? "Показать техническую сводку исследования" : "Show technical research log"}</summary><pre>{current.report}</pre></details>
               </article>
               <aside className="evidence">
-                <p className="eyebrow">EVIDENCE · {current.findings.length}</p>
+                <div className="evidencehead"><div><p className="eyebrow">{ru ? "ИСТОЧНИКИ" : "SOURCES"} · {current.findings.length}</p><span>{ru ? "Открываются в новой вкладке" : "Open in a new tab"}</span></div><FileText /></div>
                 {current.findings.slice(0, 16).map((item, index) => (
                   <a
                     key={`${item.url}-${index}`}
@@ -3728,8 +4071,8 @@ function DeepResearch({
                     <div>
                       <b>{item.title}</b>
                       <small>
-                        {item.source} · {Math.round(item.score * 100)}%{" "}
-                        {ru ? "релевантность" : "relevance"}
+                        {sourceLabel(item.source)} · {Math.round(item.score * 100)}%{" "}
+                        {ru ? "совпадение с запросом" : "query match"}
                       </small>
                     </div>
                   </a>
@@ -3976,9 +4319,10 @@ function TokenBoard({
     }
   }
 
-  const title = (token: Token) => token.label || token.symbol || token.name || token.address;
   const shortAddress = (value: string) =>
     value.length > 14 ? `${value.slice(0, 8)}…${value.slice(-6)}` : value;
+  const title = (token: Token) => token.label || token.symbol || token.name || token.address;
+  const detailTitle = (token: Token) => token.label || token.symbol || token.name || shortAddress(token.address);
   const latestEvaluationByVerdict = new Map<string, DecisionEvaluation>();
   evaluations.forEach((evaluation) => {
     if (!latestEvaluationByVerdict.has(evaluation.verdict_id)) latestEvaluationByVerdict.set(evaluation.verdict_id, evaluation);
@@ -3995,7 +4339,7 @@ function TokenBoard({
       <header className="tokenboard-head">
         <div>
           <p className="eyebrow">ROBINHOOD CHAIN · TOKEN REGISTRY</p>
-          <h1>{ru ? "Токены под наблюдением" : "Tokens under watch"}</h1>
+          <PageTitle text={ru ? "Токены под наблюдением" : "Tokens under watch"} />
           <p>
             {ru
               ? "Сохраните контракт один раз — затем прикрепляйте к нему проверяемые исследования и вердикты команды."
@@ -4069,9 +4413,9 @@ function TokenBoard({
           {selected ? <>
             <header>
               <div className="tokenident large">{selected.asset_kind === "nft" ? <ImageIcon /> : <Wallet />}<i>{(selected.symbol || selected.label || (selected.asset_kind === "nft" ? "N" : "T")).slice(0, 2).toUpperCase()}</i></div>
-              <div>
+              <div className="tokenidentitycopy">
                 <p className="eyebrow">{selected.asset_kind === "nft" ? "NFT COLLECTION · " : "TOKEN · "}{selected.watchlist ? (ru ? "В WATCHLIST" : "IN WATCHLIST") : (ru ? "В РЕЕСТРЕ" : "IN REGISTRY")}</p>
-                <h2>{title(selected)}</h2>
+                <h2 title={title(selected)}>{detailTitle(selected)}</h2>
                 <code title={selected.address}>{selected.address}</code>
               </div>
               <div className="tokenactions">
@@ -4087,14 +4431,19 @@ function TokenBoard({
             </div>
             {selected.asset_kind === "token" && <section className="paperlab">
               <header>
-                <div><p className="eyebrow">PAPER LAB · VERIFIED MARKET HISTORY</p><h3>{ru ? "Проверка решений, не реальные сделки" : "Validate decisions, never place real trades"}</h3></div>
-                <button onClick={() => void syncMarketHistory()} disabled={syncingMarket}>{syncingMarket ? (ru ? "Синхронизация…" : "Syncing…") : <><Waves /> {ru ? "Синхронизировать V3-сделки" : "Sync V3 trades"}</>}</button>
+                <div><p className="eyebrow">{ru ? "ПРОВЕРКА РЕШЕНИЙ · БЕЗ РЕАЛЬНЫХ СДЕЛОК" : "DECISION CHECK · NO REAL TRADES"}</p><h3>{ru ? "Как эта проверка заполняется" : "How this review gets filled"}</h3></div>
+                <button onClick={() => void syncMarketHistory()} disabled={syncingMarket}>{syncingMarket ? (ru ? "Синхронизация…" : "Syncing…") : <><Waves /> {ru ? "Загрузить историю on-chain сделок" : "Load on-chain trade history"}</>}</button>
               </header>
-              <p>{ru ? "Replay использует только исполненные on-chain swap-цены после вердикта. Mark-цены, будущие точки вне окна и реальный кошелёк исключены." : "Replay uses only executed on-chain swap prices after the verdict. Mark prices, points beyond the horizon, and real wallets are excluded."}</p>
+              <p>{ru ? "Ничего вводить вручную не нужно. Orbit создаёт вердикт после скана, затем берёт только реальные выполненные swaps из сети и сравнивает решение с тем, что произошло после него. Кошелёк и настоящие сделки не используются." : "You do not enter anything manually. Orbit creates a verdict after a scan, then uses only executed on-chain swaps to compare that decision with what happened afterwards. No wallet or real trade is used."}</p>
+              <div className="paperlab-journey" aria-label={ru ? "Путь проверки решения" : "Decision review flow"}>
+                <article className={verdicts.length ? "complete" : "active"}><span>01</span><div><b>{ru ? "Запустите скан" : "Run a scan"}</b><small>{ru ? "Команда проверит контракт и сформирует ENTER, WATCH или SKIP." : "The team checks the contract and returns ENTER, WATCH, or SKIP."}</small></div>{verdicts.length ? <Check /> : <button onClick={() => void startTokenScan()} disabled={starting || !team}>{starting ? (ru ? "Запускаем…" : "Starting…") : (ru ? "Запустить" : "Start")}</button>}</article>
+                <article className={verdicts.length ? (observations.some((item) => item.kind === "trade") ? "complete" : "active") : "locked"}><span>02</span><div><b>{ru ? "Загрузите цены после вердикта" : "Load prices after the verdict"}</b><small>{ru ? "Orbit считывает только подтверждённые on-chain swaps, а не прогнозные цены." : "Orbit reads only confirmed on-chain swaps, never projected prices."}</small></div><button onClick={() => void syncMarketHistory()} disabled={syncingMarket || !verdicts.length}>{syncingMarket ? (ru ? "Загружаем…" : "Loading…") : (ru ? "Загрузить" : "Load")}</button></article>
+                <article className={evaluations.some((item) => item.status === "complete") ? "complete" : verdicts.length && observations.some((item) => item.kind === "trade") ? "active" : "locked"}><span>03</span><div><b>{ru ? "Сравните решение с рынком" : "Compare the decision with the market"}</b><small>{ru ? "Кнопка проверки появится у каждого вердикта ниже, когда данных будет достаточно." : "A review button appears under each verdict below once there is enough data."}</small></div>{evaluations.some((item) => item.status === "complete") ? <Check /> : <ShieldCheck />}</article>
+              </div>
               <div className="paperlab-metrics">
-                <span><strong>{observations.filter((item) => item.kind === "trade").length}</strong><small>{ru ? "исполненных точек" : "executable points"}</small></span>
-                <span><strong>{evaluations.filter((item) => item.status === "complete").length}</strong><small>{ru ? "проверенных решений" : "measured decisions"}</small></span>
-                <span><strong>{paperTrades.filter((item) => item.status === "open").length}</strong><small>{ru ? "открытых dry-run" : "open dry-runs"}</small></span>
+                <span><strong>{observations.filter((item) => item.kind === "trade").length}</strong><small>{ru ? "подтверждённых on-chain сделок" : "confirmed on-chain trades"}</small></span>
+                <span><strong>{evaluations.filter((item) => item.status === "complete").length}</strong><small>{ru ? "решений, сверенных с рынком" : "decisions checked against market data"}</small></span>
+                <span><strong>{paperTrades.filter((item) => item.status === "open").length}</strong><small>{ru ? "активных учебных позиций" : "active simulated positions"}</small></span>
               </div>
               {decisionQuality && <div className="scorecards">
                 <header><b>{ru ? "КАЛИБРОВКА АГЕНТОВ" : "AGENT CALIBRATION"}</b><small>{decisionQuality.resolved_decisions} {ru ? "закрытых оценок" : "resolved evaluations"}</small></header>
@@ -4584,7 +4933,7 @@ function SkillsMarketplace({
       <header className="skillmarket-head">
         <div>
           <p className="eyebrow">SKILL LIBRARY · {catalogSkills.length}</p>
-          <h1>{ru ? "Маркет скиллов" : "Skill marketplace"}</h1>
+          <PageTitle text={ru ? "Маркет скиллов" : "Skill marketplace"} />
           <p>
             {ru
               ? "Читайте точные границы скилла и назначайте его агенту без скрытых правил."
@@ -4845,8 +5194,8 @@ function ProfilePage({
             <p>
               {twitterOAuthStatus === "success"
                 ? ru
-                  ? "Профиль и последние публикации добавлены в память команды."
-                  : "The profile and recent posts were added to team memory."
+                  ? "Профиль подключён и доступен команде как источник контекста."
+                  : "Your profile is connected and available to the team as context."
                 : ru
                   ? "Повторите вход и подтвердите запрошенный доступ на стороне X."
                   : "Try again and approve the requested access on X."}
@@ -4980,14 +5329,6 @@ function ProfilePage({
                   : "Connect X"}
             </button>
           </footer>
-          {twitter && twitter.config.timeline_available === false && (
-            <div className="xwarning">
-              <AlertTriangle />
-              {ru
-                ? "Профиль подключён, но для чтения публикаций токену нужен scope tweet.read."
-                : "The profile is connected, but the token needs tweet.read to import posts."}
-            </div>
-          )}
         </section>
         <section className="ambassadorcard">
           <div className="ambassadorhalo" />
@@ -5033,6 +5374,48 @@ function ProfilePage({
         </section>
       </div>
       {AUTH_REQUIRED && (
+        <section className="walletcard">
+          <div>
+            <p className="eyebrow">{ru ? "КОШЕЛЁК" : "WALLET"}</p>
+            <h3>{user.wallet_address ? shortAddress(user.wallet_address) : ru ? "Кошелёк не подключён" : "No wallet connected"}</h3>
+            <p>
+              {user.wallet_address
+                ? ru
+                  ? "Кошелёк привязан к этому аккаунту, повышенный лимит использования включён. Мы видим только адрес."
+                  : "The wallet is linked to this account and the higher usage limit is on. We only see the address."
+                : ru
+                  ? "Подключите кошелёк (MetaMask, WalletConnect и другие), чтобы получить повышенный лимит использования. Подпись бесплатна и не даёт доступа к средствам."
+                  : "Connect a wallet (MetaMask, WalletConnect and others) to get a higher usage limit. Signing is free and gives no access to your funds."}
+            </p>
+          </div>
+          {user.wallet_address ? (
+            !user.email.endsWith("@wallet.orbit") && (
+              <button
+                className="ghost"
+                onClick={() => api.unlinkWallet().then((value) => onUserChanged({ ...user, ...value })).catch((error) => setError((error as Error).message))}
+              >
+                {ru ? "Отключить" : "Disconnect"}
+              </button>
+            )
+          ) : (
+            <button className="primary" onClick={openWalletDialog}><Wallet /> {ru ? "Подключить кошелёк" : "Connect wallet"}</button>
+          )}
+        </section>
+      )}
+      {AUTH_REQUIRED && user.is_guest && (
+        <section className="walletcard">
+          <div>
+            <h3>{ru ? "Вы в гостевом режиме" : "You are browsing as a guest"}</h3>
+            <p>
+              {ru
+                ? "Данные хранятся в этом браузере. Уже есть аккаунт с email? Войдите, чтобы вернуться к нему."
+                : "Your data is kept for this browser. Already have an email account? Sign in to go back to it."}
+            </p>
+          </div>
+          <a className="ghost" href="/?signin=1">{ru ? "Войти по email" : "Sign in with email"}</a>
+        </section>
+      )}
+      {AUTH_REQUIRED && !user.is_guest && (
         <section className="accountsecurity">
           <header>
             <div>
@@ -6685,7 +7068,7 @@ function HoloModeToggle({
             : "Standard: the lead assigns work, specialists contribute, and the lead synthesises one shared result."
         }
       >
-        Standard
+        {ru ? "Стандарт" : "Standard"}
       </button>
       <input
         className="holo-checkbox-input"
@@ -6725,7 +7108,7 @@ function HoloModeToggle({
           </span>
         </span>
         <span className="holo-copy">
-          <b>Constructive</b>
+          <b>{ru ? "Конструктив" : "Constructive"}</b>
           <small>
             {active
               ? ru
@@ -6744,10 +7127,29 @@ function HoloModeToggle({
             <i className="frequency-bar" key={index} />
           ))}
         </div>
-        <span>MODE: {active ? "ACTIVE" : "STANDBY"}</span>
-        <span>VERIFY: {active ? "94.8%" : "—"}</span>
-        <span>SYNCH: {active ? "READY" : "IDLE"}</span>
+        <span>{ru ? "РЕЖИМ" : "MODE"}: {active ? (ru ? "АКТИВЕН" : "ACTIVE") : (ru ? "ОЖИДАНИЕ" : "STANDBY")}</span>
+        <span>{ru ? "ПРОВЕРКА" : "VERIFY"}: {active ? "ON" : "—"}</span>
+        <span>{ru ? "СИНХРОН" : "SYNCH"}: {active ? (ru ? "ГОТОВ" : "READY") : (ru ? "ОЖИДАНИЕ" : "IDLE")}</span>
       </div>
+    </div>
+  );
+}
+
+function DialogueModeExplainer({ mode, language }: { mode: Mode; language: "ru" | "en" }) {
+  const ru = language === "ru";
+  const constructive = mode === "constructive";
+  return (
+    <div className={`dialogue-mode-explainer ${constructive ? "constructive" : "standard"}`} role="status">
+      <b>{constructive ? (ru ? "Конструктивный режим" : "Constructive mode") : (ru ? "Стандартный режим" : "Standard mode")}</b>
+      <span>
+        {constructive
+          ? (ru
+            ? "Для решений и спорных задач: независимый критик проверяет вклад команды, а руководитель фиксирует общий вывод и ограничения."
+            : "For decisions and disputed work: an independent critic checks the team’s evidence, then the lead records one conclusion and its limits.")
+          : (ru
+            ? "Для быстрых ответов и исполнения: руководитель подключает только нужных специалистов; отдельная критика не запускается."
+            : "For fast answers and execution: the lead calls only the specialists needed; no separate critique is started.")}
+      </span>
     </div>
   );
 }
@@ -7982,6 +8384,7 @@ function LiveRun({
             language={appearance.language}
           />
         </div>
+        <DialogueModeExplainer mode={mode} language={appearance.language} />
         {guardEvent && run.status === "paused" && (
           <div className="safetyintervention">
             <AlertTriangle />
@@ -9034,7 +9437,7 @@ function EventCard({
             {mode === "constructive" ? "Constructive" : "Standard"}
           </span>
         </header>
-        <p>{visibleMessageContent(event, system || human ? undefined : name)}</p>
+        <StructuredMessage value={visibleMessageContent(event, system || human ? undefined : name, ru)} />
         {event.type === "run.failed" && (
           <div className="runfailure">
             {(
@@ -9128,6 +9531,7 @@ function Connections({
   const [connectorCredential, setConnectorCredential] = useState("");
   const [connectorIdentifier, setConnectorIdentifier] = useState("");
   const [connectorBusy, setConnectorBusy] = useState(false);
+  const [configureConnectorTarget, setConfigureConnectorTarget] = useState(false);
   const [capabilities, setCapabilities] = useState<DeploymentCapabilities | null>(null);
   const [confirmConnectorRevoke, setConfirmConnectorRevoke] = useState(false);
   const [modelOpen, setModelOpen] = useState(false);
@@ -9546,6 +9950,7 @@ function Connections({
                 setConnectorChoice(preset);
                 setConnectorCredential("");
                 setConnectorIdentifier("");
+                setConfigureConnectorTarget(false);
                 setConfirmConnectorRevoke(false);
               }}
             >
@@ -9817,21 +10222,23 @@ function Connections({
                 )}
               </div>
             ) : null}
-            {!chosenContextConnection && !connectorChoice.oauth && (
+            {(!chosenContextConnection || configureConnectorTarget) && !connectorChoice.oauth && (
               <div className="connectorcredentialform">
-                <label className="inputlabel">
-                  <span>
-                    {connectorChoice.credentialLabel || "API key"}
-                    {connectorChoice.credentialRequired === false ? ` (${ru ? "необязательно" : "optional"})` : ""}
-                  </span>
-                  <input
-                    type="password"
-                    value={connectorCredential}
-                    onChange={(event) => setConnectorCredential(event.target.value)}
-                    autoComplete="off"
-                    placeholder={ru ? "Вставьте ключ" : "Paste API key"}
-                  />
-                </label>
+                {!chosenContextConnection && (
+                  <label className="inputlabel">
+                    <span>
+                      {connectorChoice.credentialLabel || "API key"}
+                      {connectorChoice.credentialRequired === false ? ` (${ru ? "необязательно" : "optional"})` : ""}
+                    </span>
+                    <input
+                      type="password"
+                      value={connectorCredential}
+                      onChange={(event) => setConnectorCredential(event.target.value)}
+                      autoComplete="off"
+                      placeholder={ru ? "Вставьте ключ" : "Paste API key"}
+                    />
+                  </label>
+                )}
                 <label className="inputlabel">
                   <span>{connectorChoice.identifierLabel || (ru ? "Идентификатор" : "Identifier")}</span>
                   <input
@@ -9843,6 +10250,13 @@ function Connections({
                     spellCheck={false}
                   />
                 </label>
+                {connectorChoice.id === "bitquery" && (
+                  <p className="fieldhint">
+                    {ru
+                      ? "Это только публичный адрес для скана данных. Он не даёт Orbit доступ к кошельку и не нужен для сохранения API-ключа."
+                      : "This is only a public address to scan data. It never grants wallet access and is not needed to save the API key."}
+                  </p>
+                )}
                 {connectorChoice.helpUrl && (
                   <a href={connectorChoice.helpUrl} target="_blank" rel="noreferrer">
                     {ru ? "Где получить API-ключ" : "Get an API key"}
@@ -9873,11 +10287,11 @@ function Connections({
               </div>
             )}
             <footer>
-              {chosenContextConnection ? (
+              {chosenContextConnection && !configureConnectorTarget ? (
                 <>
                   <button
                     className={confirmConnectorRevoke ? "danger" : ""}
-                    disabled={connectorBusy}
+                    disabled={connectorBusy || (connectorChoice.id === "bitquery" && !chosenContextConnection.config.target_configured)}
                     onClick={() => revokeContext(chosenContextConnection)}
                   >
                     <Trash2 />
@@ -9891,12 +10305,22 @@ function Connections({
                   </button>
                   <button
                     className="primary"
-                    disabled={connectorBusy}
+                    disabled={connectorBusy || (connectorChoice.id === "bitquery" && !chosenContextConnection.config.target_configured)}
                     onClick={() => syncContext(chosenContextConnection)}
                   >
                     {connectorBusy ? <Activity /> : <RotateCcw />}
                     {ru ? "Обновить сейчас" : "Refresh now"}
                   </button>
+                  {connectorChoice.id === "bitquery" && !chosenContextConnection.config.target_configured && (
+                    <button
+                      className="primary"
+                      disabled={connectorBusy}
+                      onClick={() => setConfigureConnectorTarget(true)}
+                    >
+                      <Plug />
+                      {ru ? "Выбрать адрес для скана" : "Choose scan address"}
+                    </button>
+                  )}
                 </>
               ) : connectorChoice.oauth ? (
                 <button
@@ -9914,13 +10338,15 @@ function Connections({
                   className="primary"
                   disabled={
                     connectorBusy ||
-                    !connectorIdentifier.trim() ||
-                    (connectorChoice.credentialRequired !== false && !connectorCredential.trim())
+                    (connectorChoice.identifierRequired !== false && !connectorIdentifier.trim()) ||
+                    (!chosenContextConnection && connectorChoice.credentialRequired !== false && !connectorCredential.trim())
                   }
                   onClick={connectContextCredential}
                 >
                   {connectorBusy ? <Activity /> : <Plug />}
-                  {ru ? `Подключить ${connectorChoice.name}` : `Connect ${connectorChoice.name}`}
+                  {configureConnectorTarget
+                    ? ru ? "Сохранить адрес и запустить скан" : "Save address and start scan"
+                    : ru ? `Подключить ${connectorChoice.name}` : `Connect ${connectorChoice.name}`}
                 </button>
               )}
             </footer>

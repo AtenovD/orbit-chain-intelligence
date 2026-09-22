@@ -288,8 +288,24 @@ class UserRead(ORMModel):
     enabled: bool
     is_superuser: bool = False
     email_verified: bool = False
+    is_guest: bool = False
+    wallet_address: str | None = None
     last_seen_at: datetime | None = None
     created_at: datetime
+
+
+class WalletNonceRead(BaseModel):
+    nonce: str
+    domain: str
+    uri: str
+    chain_id: int
+    issued_at: str
+    expires_at: str
+
+
+class WalletVerify(BaseModel):
+    message: str = Field(min_length=20, max_length=2000)
+    signature: str = Field(min_length=100, max_length=200)
 
 
 class AuthRead(BaseModel):
@@ -333,6 +349,10 @@ class PasswordResetConfirm(BaseModel):
 
 class EmailVerificationConfirm(BaseModel):
     token: str = Field(min_length=20, max_length=500)
+
+
+class AdminUserUpdate(BaseModel):
+    enabled: bool
 
 
 class ConnectionCreate(BaseModel):
@@ -434,7 +454,7 @@ class ContextConnectorSyncRead(BaseModel):
     connection: ConnectionRead
     label: str
     item_count: int
-    memory_note_id: str
+    memory_note_id: str | None = None
 
 
 class ContextConnectorOAuthStartRead(BaseModel):

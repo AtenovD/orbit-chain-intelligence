@@ -25,6 +25,7 @@ dependencies = [
   "pypdf>=5.9,<7",
   "python-docx>=1.2,<2",
   "sentry-sdk[fastapi]>=2.0,<3",
+  "eth-account>=0.13,<1",
 ]
 
 [project.optional-dependencies]
