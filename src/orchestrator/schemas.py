@@ -351,10 +351,6 @@ class EmailVerificationConfirm(BaseModel):
     token: str = Field(min_length=20, max_length=500)
 
 
-class AdminUserUpdate(BaseModel):
-    enabled: bool
-
-
 class ConnectionCreate(BaseModel):
     workspace_id: str
     name: str
@@ -454,7 +450,7 @@ class ContextConnectorSyncRead(BaseModel):
     connection: ConnectionRead
     label: str
     item_count: int
-    memory_note_id: str | None = None
+    memory_note_id: str
 
 
 class ContextConnectorOAuthStartRead(BaseModel):

@@ -971,205 +971,6 @@ async def delete_current_account(payload: AccountDelete, session: AsyncSession =
     return None
 
 
-def _day_key(value: object) -> str:
-    return value.isoformat() if hasattr(value, "isoformat") else str(value)
-
-
-def _pct_change(current: float, previous: float) -> float | None:
-    """None means there is no prior period to compare against, which the UI must not show as 0%."""
-    if previous <= 0:
-        return None
-    return round((current - previous) / previous * 100, 1)
-
-
-@router.get("/admin/overview")
-async def admin_overview(session: AsyncSession = Depends(get_session)) -> dict[str, object]:
-    """One bounded query surface for the owner dashboard; never leaks to workspace roles."""
-    await require_superuser(session)
-    now = datetime.now(timezone.utc)
-    today = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    since_7 = today - timedelta(days=6)
-    since_30 = today - timedelta(days=29)
-    month_start = today - timedelta(days=29)
-
-    total_users = int(await session.scalar(select(func.count(User.id))) or 0)
-    registrations_7 = int(await session.scalar(select(func.count(User.id)).where(User.created_at >= since_7)) or 0)
-    registrations_30 = int(await session.scalar(select(func.count(User.id)).where(User.created_at >= since_30)) or 0)
-    dau = int(await session.scalar(select(func.count(User.id)).where(User.last_seen_at >= now - timedelta(days=1))) or 0)
-    live_sessions = int(
-        await session.scalar(select(func.count(func.distinct(AuthSession.user_id))).where(AuthSession.expires_at > now)) or 0
-    )
-    runs_today = int(await session.scalar(select(func.count(Run.id)).where(Run.created_at >= today)) or 0)
-    spend_month = int(
-        await session.scalar(select(func.coalesce(func.sum(Run.total_cost_micros), 0)).where(Run.created_at >= month_start)) or 0
-    )
-    total_runs = int(await session.scalar(select(func.count(Run.id))) or 0)
-    failed_runs = int(await session.scalar(select(func.count(Run.id)).where(Run.status == RunStatus.failed)) or 0)
-    activated_users = int(
-        await session.scalar(
-            select(func.count(func.distinct(WorkspaceMember.user_id)))
-            .select_from(ProviderConnection)
-            .join(WorkspaceMember, WorkspaceMember.workspace_id == ProviderConnection.workspace_id)
-            .where(WorkspaceMember.role == "owner", ProviderConnection.enabled.is_(True))
-        )
-        or 0
-    )
-
-    async def visit_window(start: datetime, end: datetime | None) -> tuple[int, int, int, int]:
-        clauses = [DailyVisit.day >= start]
-        if end is not None:
-            clauses.append(DailyVisit.day < end)
-        row = (
-            await session.execute(
-                select(
-                    # A visitor can return on several UTC days. Count the stable
-                    # privacy hash once for the selected period, not once per day.
-                    func.count(func.distinct(DailyVisit.visitor_hash)),
-                    func.coalesce(func.sum(DailyVisit.request_count), 0),
-                    # This is a daily visit with one request, not a conventional
-                    # analytics "bounce". The UI names it accordingly.
-                    func.coalesce(func.sum(case((DailyVisit.request_count <= 1, 1), else_=0)), 0),
-                    func.count(DailyVisit.id),
-                ).where(*clauses)
-            )
-        ).one()
-        return int(row[0] or 0), int(row[1] or 0), int(row[2] or 0), int(row[3] or 0)
-
-    visitors_7, requests_7, single_request_visits_7, visit_days_7 = await visit_window(since_7, None)
-    visitors_prev, requests_prev, single_request_visits_prev, visit_days_prev = await visit_window(today - timedelta(days=13), since_7)
-    bounce_rate_7 = round(single_request_visits_7 / visit_days_7 * 100, 1) if visit_days_7 else 0.0
-    bounce_rate_prev = round(single_request_visits_prev / visit_days_prev * 100, 1) if visit_days_prev else 0.0
-
-    registration_rows = (
-        await session.execute(
-            select(func.date(User.created_at), func.count(User.id))
-            .where(User.created_at >= since_30)
-            .group_by(func.date(User.created_at))
-        )
-    ).all()
-    activity_rows = (
-        await session.execute(
-            select(func.date(DailyVisit.day), func.count(DailyVisit.id))
-            .where(DailyVisit.day >= since_30)
-            .group_by(func.date(DailyVisit.day))
-        )
-    ).all()
-    login_rows = (
-        await session.execute(
-            select(func.date(AuthSession.created_at), func.count(AuthSession.id))
-            .where(AuthSession.created_at >= since_30)
-            .group_by(func.date(AuthSession.created_at))
-        )
-    ).all()
-    registrations = {_day_key(day): int(count) for day, count in registration_rows}
-    activity = {_day_key(day): int(count) for day, count in activity_rows}
-    logins = {_day_key(day): int(count) for day, count in login_rows}
-    timeline = []
-    for offset in range(29, -1, -1):
-        day = today - timedelta(days=offset)
-        key = day.date().isoformat()
-        timeline.append({"day": key, "registrations": registrations.get(key, 0), "active": activity.get(key, 0), "logins": logins.get(key, 0)})
-
-    run_stats_rows = (
-        await session.execute(
-            select(
-                WorkspaceMember.user_id,
-                func.count(Run.id),
-                func.coalesce(func.sum(Run.total_cost_micros), 0),
-                func.coalesce(func.sum(Run.total_input_tokens), 0),
-            )
-            .select_from(WorkspaceMember)
-            .join(Team, Team.workspace_id == WorkspaceMember.workspace_id)
-            .join(Run, Run.team_id == Team.id)
-            .where(WorkspaceMember.role == "owner")
-            .group_by(WorkspaceMember.user_id)
-        )
-    ).all()
-    run_stats = {row[0]: {"runs": int(row[1]), "cost_micros": int(row[2]), "input_tokens": int(row[3])} for row in run_stats_rows}
-    login_rows_by_user = (
-        await session.execute(select(AuthSession.user_id, func.max(AuthSession.created_at)).group_by(AuthSession.user_id))
-    ).all()
-    last_login = {row[0]: row[1] for row in login_rows_by_user}
-    users = list((await session.scalars(select(User).order_by(User.created_at.desc()).limit(200))).all())
-    user_rows = [
-        {
-            "id": item.id,
-            "email": item.email,
-            "display_name": item.display_name,
-            "enabled": item.enabled,
-            "is_superuser": is_superuser(item),
-            "email_verified": item.email_verified,
-            "created_at": item.created_at,
-            "last_seen_at": item.last_seen_at,
-            "last_login_at": last_login.get(item.id),
-            **run_stats.get(item.id, {"runs": 0, "cost_micros": 0, "input_tokens": 0}),
-        }
-        for item in users
-    ]
-    recent_rows = (
-        await session.execute(
-            select(Run, Team, User.email)
-            .join(Team, Team.id == Run.team_id)
-            .outerjoin(
-                WorkspaceMember,
-                (WorkspaceMember.workspace_id == Team.workspace_id) & (WorkspaceMember.role == "owner"),
-            )
-            .outerjoin(User, User.id == WorkspaceMember.user_id)
-            .order_by(Run.created_at.desc())
-            .limit(30)
-        )
-    ).all()
-    recent_runs = [
-        {"id": run.id, "goal": run.goal, "status": run.status.value, "created_at": run.created_at, "cost_micros": run.total_cost_micros, "owner_email": email}
-        for run, _team, email in recent_rows
-    ]
-    token_rows = (
-        await session.execute(
-            select(Token.symbol, Token.name, Token.address, func.count(TokenVerdict.id))
-            .outerjoin(TokenVerdict, TokenVerdict.token_id == Token.id)
-            .group_by(Token.id, Token.symbol, Token.name, Token.address)
-            .order_by(func.count(TokenVerdict.id).desc(), Token.updated_at.desc())
-            .limit(10)
-        )
-    ).all()
-    verdict_rows = (
-        await session.execute(select(TokenVerdict.verdict, func.count(TokenVerdict.id)).group_by(TokenVerdict.verdict))
-    ).all()
-    return {
-        "summary": {
-            "total_users": total_users, "registrations_7": registrations_7, "registrations_30": registrations_30,
-            "dau": dau, "live_sessions": live_sessions, "runs_today": runs_today, "spend_month_micros": spend_month,
-            "activation_users": activated_users, "activation_rate": round(activated_users / total_users, 4) if total_users else 0,
-            "total_runs": total_runs, "failed_runs": failed_runs,
-            "failure_rate": round(failed_runs / total_runs, 4) if total_runs else 0,
-            "visitors_7": visitors_7, "visitors_delta": _pct_change(visitors_7, visitors_prev),
-            "requests_7": requests_7, "requests_delta": _pct_change(requests_7, requests_prev),
-            "bounce_rate_7": bounce_rate_7,
-            "bounce_delta": round(bounce_rate_7 - bounce_rate_prev, 1) if visitors_prev else None,
-        },
-        "timeline": timeline,
-        "users": user_rows,
-        "recent_runs": recent_runs,
-        "top_tokens": [
-            {"symbol": symbol, "name": name, "address": address, "verdicts": int(count)}
-            for symbol, name, address, count in token_rows
-        ],
-        "verdict_distribution": {str(verdict): int(count) for verdict, count in verdict_rows},
-    }
-
-
-@router.patch("/admin/users/{user_id}", response_model=UserRead)
-async def admin_update_user(user_id: str, payload: AdminUserUpdate, session: AsyncSession = Depends(get_session)):
-    admin = await require_superuser(session)
-    user = await require(session, User, user_id)
-    if user.id == admin.id and not payload.enabled:
-        raise HTTPException(status_code=422, detail="You cannot disable your own administrator account")
-    user.enabled = payload.enabled
-    await session.commit()
-    await session.refresh(user)
-    return user_read(user)
-
-
 @router.post("/workspaces", response_model=WorkspaceRead, status_code=status.HTTP_201_CREATED)
 async def create_workspace(payload: WorkspaceCreate, session: AsyncSession = Depends(get_session)):
     workspace = Workspace(**payload.model_dump())
@@ -2432,6 +2233,10 @@ async def connect_context_connector(
 ):
     await ensure_workspace_access(session, payload.workspace_id)
     preset = connector_preset(payload.connector)
+    if preset.get("credential_required", True) and not payload.credential.strip():
+        raise HTTPException(status_code=422, detail=f"{preset['name']} API credential is required")
+    if preset.get("needs_identifier") and not (payload.identifier or "").strip():
+        raise HTTPException(status_code=422, detail=f"{preset['name']} requires an identifier")
     provider = f"connector-{payload.connector}"
     connection = await session.scalar(
         select(ProviderConnection).where(
@@ -2439,21 +2244,7 @@ async def connect_context_connector(
             ProviderConnection.provider == provider,
         )
     )
-    if (
-        preset.get("credential_required", True)
-        and not payload.credential.strip()
-        and not (connection and payload.connector == "bitquery")
-    ):
-        raise HTTPException(status_code=422, detail=f"{preset['name']} API credential is required")
-    if preset.get("needs_identifier") and not (payload.identifier or "").strip():
-        raise HTTPException(status_code=422, detail=f"{preset['name']} requires an identifier")
-    identifier = (payload.identifier or "").strip() or None
-    config = {
-        "identifier": identifier,
-        "auth_method": "credential",
-        "sync_status": "syncing",
-        "target_configured": bool(identifier) if payload.connector == "bitquery" else True,
-    }
+    config = {"identifier": payload.identifier, "auth_method": "credential", "sync_status": "syncing"}
     telegram_webhook_secret = None
     if payload.connector == "telegram":
         telegram_webhook_secret = secrets.token_urlsafe(24).replace("-", "_")
@@ -2464,11 +2255,8 @@ async def connect_context_connector(
     if connection:
         connection.name = preset["name"]
         connection.base_url = preset["base_url"]
-        # A saved Bitquery key can be given a scan target later.  Do not make
-        # the user paste their secret again merely to choose that target.
-        if payload.credential.strip():
-            connection.api_key = secret_codec.encrypt(payload.credential)
-            connection.credential_fingerprint = fingerprint
+        connection.api_key = secret_codec.encrypt(payload.credential)
+        connection.credential_fingerprint = fingerprint
         connection.config = config
         connection.enabled = True
     else:
@@ -2483,23 +2271,6 @@ async def connect_context_connector(
         )
         session.add(connection)
     await session.flush()
-    if payload.connector == "bitquery" and not identifier:
-        connection.name = "Bitquery · API connected"
-        connection.config = {
-            **dict(connection.config or {}),
-            "label": "API connected — scan target not selected",
-            "item_count": 0,
-            "target_configured": False,
-            "sync_status": "ready",
-            "last_error": None,
-        }
-        await session.commit()
-        await session.refresh(connection)
-        return ContextConnectorSyncRead(
-            connection=connection,
-            label="API connected — scan target not selected",
-            item_count=0,
-        )
     try:
         connector_data, memory = await sync_context_connection(session, connection, reason="connected")
         if payload.connector == "telegram":

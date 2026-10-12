@@ -46,20 +46,6 @@ export type DeploymentCapabilities = {
   research: Record<string, boolean>;
 };
 
-export type AdminUser = {
-  id: string; email: string; display_name: string; enabled: boolean; is_superuser: boolean;
-  email_verified: boolean; created_at: string; last_seen_at: string | null; last_login_at: string | null;
-  runs: number; cost_micros: number; input_tokens: number;
-};
-export type AdminOverview = {
-  summary: { total_users: number; registrations_7: number; registrations_30: number; dau: number; live_sessions: number; runs_today: number; spend_month_micros: number; activation_users: number; activation_rate: number; total_runs: number; failed_runs: number; failure_rate: number; visitors_7: number; visitors_delta: number | null; requests_7: number; requests_delta: number | null; bounce_rate_7: number; bounce_delta: number | null };
-  timeline: Array<{ day: string; registrations: number; active: number; logins: number }>;
-  users: AdminUser[];
-  recent_runs: Array<{ id: string; goal: string; status: string; created_at: string; cost_micros: number; owner_email: string | null }>;
-  top_tokens: Array<{ symbol: string | null; name: string | null; address: string; verdicts: number }>;
-  verdict_distribution: Record<string, number>;
-};
-
 export type SessionUser = {
   id: string; email: string; display_name: string; email_verified: boolean; is_superuser: boolean;
   is_guest?: boolean; wallet_address?: string | null;
@@ -174,9 +160,6 @@ export const api = {
   confirmEmailVerification: (token: string) => request<void>("/auth/email-verification/confirm", {
     method: "POST", body: JSON.stringify({ token }),
   }),
-  adminOverview: () => request<AdminOverview>("/admin/overview"),
-  updateAdminUser: (id: string, enabled: boolean) =>
-    request<AdminUser>(`/admin/users/${id}`, { method: "PATCH", body: JSON.stringify({ enabled }) }),
   logout: () => request<void>("/auth/logout", { method: "POST" }),
   updateMe: (data: {
     display_name?: string;
